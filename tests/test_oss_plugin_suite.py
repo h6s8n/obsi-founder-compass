@@ -168,7 +168,7 @@ class TestEndToEndScaffoldingAndRouting(unittest.TestCase):
                 os.makedirs(tasks_dir, exist_ok=True)
                 sample_tasks = {
                     "AcmeSaaS - Ship Landing.md": "status: Doing\ntoday: true\nday: Sun\npriority: High\naction: Publish landing page\n",
-                    "AcmeSaaS - Call Leads.md": "status: Sprint\ntoday: false\nday: \"\"\npriority: Medium\naction: Reach out to 5 beta leads\n",
+                    "AcmeSaaS - Call Leads.md": "status: Sprint\ntoday: false\nday: \"\"\npriority: Medium\naction: Reach out to five early beta leads and verify onboarding workflow bottlenecks cleanly\n",
                     "AcmeSaaS - Launch Ads.md": "status: Locked\ntoday: false\nday: \"\"\ndepends_on: \"[[AcmeSaaS - Ship Landing]]\"\npriority: Low\naction: Start paid campaign\n",
                     "AcmeSaaS - Setup Repo.md": "status: Done\ntoday: false\nday: \"\"\npriority: High\naction: Initialize codebase\n",
                 }
@@ -181,10 +181,14 @@ class TestEndToEndScaffoldingAndRouting(unittest.TestCase):
                 self.assertEqual(hub_ready["state"], "ready")
                 self.assertEqual(hub_ready["detected_project"], "AcmeSaaS")
                 self.assertEqual(len(hub_ready["recommended_options"]), 5)
+                self.assertIn("Ship Landing", hub_ready["recommended_options"][0])
                 self.assertEqual(hub_ready["project_tasks"]["active_total"], 2)
                 self.assertEqual(hub_ready["project_tasks"]["locked_count"], 1)
                 self.assertEqual(hub_ready["project_tasks"]["items"][0]["badge"], "🔥")
                 self.assertEqual(hub_ready["project_tasks"]["items"][1]["badge"], "⚡")
+                self.assertTrue(hub_ready["project_tasks"]["items"][1]["action"].endswith("bottlenecks…"))
+                fa_cut = roh._truncate_words("تکمیل و ارسال نهایی درخواست درگاه پرداخت بانک ملی برای سایت فروشگاهی نمونه", 45)
+                self.assertEqual(fa_cut, "تکمیل و ارسال نهایی درخواست درگاه پرداخت…")
                 card = hub_ready["project_tasks_card"]
                 self.assertIn("Ship Landing", card)
                 self.assertIn("Call Leads", card)

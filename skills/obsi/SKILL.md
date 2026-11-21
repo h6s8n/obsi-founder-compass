@@ -24,6 +24,7 @@ Display `summary_2lines` and (if non-empty) `project_tasks_card` (top 5 one-line
 | **`obsi <text>`** *(capture)* | Detect layer (Cohort, Project, Rock, Task, Idea), draft YAML, confirm in 1 line, write cleanly. | `second-brain` |
 | **`/obsi next`** | Surface the single highest-priority unlocked active task ready now. | `Today.base` / `Tasks.base` |
 | **`/obsi tactical`** | Plan weekly day slots with concrete half-line `action:` (`Mon–Sun` or `Sat–Fri`). | `Weekly.base` |
+| **`/obsi log [task]`** | Log partial progress (`status: Doing`, refresh `action:`, append dated progress note without closing prematurely). | `02-Tasks/` |
 | **`/obsi done [task]`** | Set `status: Done`, `today: false`, `completed: YYYY-MM-DD`; unlock matched `depends_on` tasks (`Locked` -> `Sprint`). | `02-Tasks/` |
 
 ## Execution Rule

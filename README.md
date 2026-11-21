@@ -56,7 +56,7 @@ agy plugin install .
 | **`/obsi-setup`** | Asks 4 quick clickable questions, previews changes with `--dry-run`, and scaffolds your Obsidian Vault (or adds a new project). |
 | **`/obsi-consult`** | Mirrors your product vision in 4 plain lines, checks cached 90-day playbooks, and finds market/buyer gaps without touching code. |
 | **`/obsi-priority`** | Turns approved strategy bundles into 14-day `Scale / Pivot / Kill` experiments and atomic tasks with optional Light/Medium/Deep pacing. |
-| **`/obsi next` · `/obsi done`** | Surfaces your single top unblocked task to do now; marking it done automatically unlocks dependent `Locked` tasks. |
+| **`/obsi next` · `/obsi log` · `/obsi done`** | Shows your top unlocked task, logs partial progress cleanly (`Doing`), or marks done and auto-unlocks the next `Locked` task. |
 | **`/obsi-inspect`** | Reads recent chat turns to flag unverified AI claims or blind agreement, and runs a 1-second Vault health audit. |
 
 ---

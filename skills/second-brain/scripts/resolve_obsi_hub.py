@@ -123,6 +123,17 @@ def count_vault_stats(vault_path: str) -> dict:
     }
 
 
+def _truncate_words(text: str, max_len: int = 84) -> str:
+    if len(text) <= max_len:
+        return text
+    cut = text[: max_len - 1].rstrip()
+    if " " in cut:
+        head = cut.rsplit(" ", 1)[0].rstrip(" ,،.;:-—")
+        if head:
+            cut = head
+    return cut + "…"
+
+
 def collect_project_tasks(vault_path: str, project_name: str, lang: str = "en", limit: int = 5) -> tuple[dict, str]:
     tasks_dir = os.path.join(vault_path, "02-Tasks")
     active_rows: list[tuple[tuple[int, int, str], dict]] = []
@@ -172,7 +183,7 @@ def collect_project_tasks(vault_path: str, project_name: str, lang: str = "en", 
                 elif status in ("Sprint", "Doing") or today_flag:
                     is_hot = today_flag or status == "Doing"
                     badge = "🔥" if is_hot else "⚡"
-                    short_action = (action[:69].rstrip() + "…") if len(action) > 72 else action
+                    short_action = _truncate_words(action, 84)
                     sort_key = (0 if is_hot else 1, PRIORITY_RANK.get(priority.lower(), 3), clean_title.lower())
                     active_rows.append(
                         (
@@ -281,14 +292,20 @@ def resolve_hub(cwd: str = "", config_path: str | None = None, vault_override: s
             vault_path, detected, lang=lang, limit=max_tasks
         )
 
+    top = project_tasks["items"][0] if (project_tasks and project_tasks.get("items")) else None
     if lang == "fa":
         proj_label = f"پروژه فعال: «{detected}»" if detected else f"{proj_count} پروژه در ابسیدین"
         summary = (
             f"مغز دوم آماده است ({proj_label}).\n"
             f"آمار زنده: {stats['today_tasks']} تسک امروز · {stats['sprint_tasks']} تسک اسپرینت · {stats['active_cohorts']} کورس فعال · {stats['scorecards_count']} کارنامه."
         )
+        opt1 = (
+            f"(Recommended) ادامه {top['badge']} {top['title']} — یا لایه ۳ (ثبت پیشرفت / بستن / بعدی)"
+            if top
+            else "(Recommended) لایه ۳ — اجرای روزمره (ثبت پیشرفت / کار بعدی / برنامه هفته / بستن تسک)"
+        )
         options = [
-            "(Recommended) لایه ۳ — اجرای روزمره (کار بعدی / برنامه هفته / ثبت سریع / بستن تسک)",
+            opt1,
             "لایه ۱ — مشاور کلان بازار پروژه (/obsi-consult)",
             "لایه ۲ — انتخاب کورس‌ها و اولویت‌بندی (/obsi-priority)",
             "لایه ۰ — افزودن پروژه یا ستون جدید (/obsi-setup)",
@@ -300,8 +317,13 @@ def resolve_hub(cwd: str = "", config_path: str | None = None, vault_override: s
             f"Second Brain is ready ({proj_label}).\n"
             f"Live stats: {stats['today_tasks']} today · {stats['sprint_tasks']} sprint · {stats['active_cohorts']} active cohorts · {stats['scorecards_count']} scorecards."
         )
+        opt1 = (
+            f"(Recommended) Continue {top['badge']} {top['title']} — or Layer 3 ops (log / done / next)"
+            if top
+            else "(Recommended) Layer 3 — Daily Execution (log progress / next task / weekly plan / done)"
+        )
         options = [
-            "(Recommended) Layer 3 — Daily Execution (next task / weekly plan / capture / done)",
+            opt1,
             "Layer 1 — 30,000-ft Market Consultant (/obsi-consult)",
             "Layer 2 — Cohort Design & Advisory Priority (/obsi-priority)",
             "Layer 0 — Add Project or Pillar (/obsi-setup)",
