@@ -674,9 +674,9 @@ def resolve_hub(
         )
         total_items = len(project_tasks["items"]) if project_tasks and project_tasks.get("items") else 0
         opt1 = (
-            f"(Recommended) انجام {top['badge']} {top['title']} — یا انتخاب از بین {total_items} تسک فعال (/obsi next / done)"
-            if top
-            else "(Recommended) لایه ۳ — اجرای روزمره (ثبت پیشرفت / کار بعدی / برنامه هفته / بستن تسک)"
+            f"(Recommended) لایه ۳ — تسک‌های فعال و کارتابل امروز ({total_items} تسک باز)"
+            if total_items
+            else "(Recommended) لایه ۳ — اجرای روزمره و ثبت تسک جدید (/obsi)"
         )
         options = [
             opt1,
@@ -693,9 +693,9 @@ def resolve_hub(
         )
         total_items = len(project_tasks["items"]) if project_tasks and project_tasks.get("items") else 0
         opt1 = (
-            f"(Recommended) Work on {top['badge']} {top['title']} — or pick from {total_items} active task(s) (/obsi next / done)"
-            if top
-            else "(Recommended) Layer 3 — Daily Execution (log progress / next task / weekly plan / done)"
+            f"(Recommended) Layer 3 — Active Tasks & Daily Queue ({total_items} active)"
+            if total_items
+            else "(Recommended) Layer 3 — Daily Execution (capture / next task)"
         )
         options = [
             opt1,
