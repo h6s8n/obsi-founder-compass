@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="252" viewBox="0 0 840 252" role="img" aria-label="Live Watch-Only Donation Wallet Meter">
+  <defs>
+    <clipPath id="cup-en-light">
+      <path d="M 64 78 L 138 78 L 132 162 Q 130 176 101 176 Q 72 176 70 162 Z"/>
+    </clipPath>
+    <linearGradient id="bar-en-light" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#1a7f37"/>
+      <stop offset="100%" stop-color="#0969da"/>
+    </linearGradient>
+    <linearGradient id="coffee-en-light" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#b07442"/>
+      <stop offset="100%" stop-color="#6b3e1b"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="838" height="250" rx="12" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+  <rect x="22" y="22" width="164" height="208" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+  <line x1="74" y1="152" x2="128" y2="152" stroke="#d0d7de" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <g clip-path="url(#cup-en-light)">
+    <rect x="62" y="76" width="78" height="102" fill="#f6f8fa"/>
+  </g>
+  <path d="M 64 78 L 138 78 L 132 162 Q 130 176 101 176 Q 72 176 70 162 Z" fill="none" stroke="#57606a" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M 136 92 C 156 92 156 140 134 140" fill="none" stroke="#57606a" stroke-width="4.2" stroke-linecap="round"/>
+  <text x="101" y="128" fill="#57606a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="700" text-anchor="middle">EMPTY</text>
+  <text x="104" y="209" fill="#1f2328" font-family="system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle" direction="ltr">0% Full ($100)</text>
+  <text x="208" y="44" fill="#1f2328" font-family="system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif" font-size="15" font-weight="700" text-anchor="start" direction="ltr">Watch-Only On-Chain Wallet Gauge</text>
+  <rect x="636" y="25" width="180" height="26" rx="13" fill="#eaeef2" stroke="#d0d7de" stroke-width="1.3"/>
+  <text x="726" y="42" fill="#57606a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle" direction="ltr">EMPTY · $0.00</text>
+  <text x="208" y="72" fill="#57606a" font-family="system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif" font-size="12" font-weight="600" text-anchor="start" direction="ltr">Milestone Progress: $0.00 / $100 (0.0%)</text>
+  <rect x="208" y="82" width="608" height="20" rx="10" fill="#eaeef2" stroke="#d0d7de" stroke-width="1"/>
+  <text x="208" y="116" fill="#57606a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" text-anchor="start">0%</text>
+  <text x="360" y="116" fill="#57606a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" text-anchor="middle">25%</text>
+  <text x="512" y="116" fill="#57606a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" text-anchor="middle">50%</text>
+  <text x="664" y="116" fill="#57606a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" text-anchor="middle">75%</text>
+  <text x="816" y="116" fill="#57606a" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" text-anchor="end">100% ($100)</text>
+  <text x="208" y="138" fill="#1f2328" font-family="system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif" font-size="11" font-weight="600" text-anchor="start" direction="ltr">50% Pledge: $0.00 -&gt; Cancer Care  |  $0.00 -&gt; Open-Source</text>
+  <rect x="208" y="147" width="303" height="12" rx="6" fill="#f6d8ea"/>
+  <rect x="513" y="147" width="303" height="12" rx="6" fill="#d8e9fc"/>
+  <rect x="208" y="176" width="192" height="46" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+  <text x="304" y="195" fill="#57606a" font-family="system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif" font-size="10" font-weight="600" text-anchor="middle" direction="ltr">TRON (TRC20 / TRX)</text>
+  <text x="304" y="213" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="700" text-anchor="middle">$0.00</text>
+  <rect x="416" y="176" width="192" height="46" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+  <text x="512" y="195" fill="#57606a" font-family="system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif" font-size="10" font-weight="600" text-anchor="middle" direction="ltr">EVM (Base / Arb / ETH)</text>
+  <text x="512" y="213" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="700" text-anchor="middle">$0.00</text>
+  <rect x="624" y="176" width="192" height="46" rx="8" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+  <text x="720" y="195" fill="#57606a" font-family="system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif" font-size="10" font-weight="600" text-anchor="middle" direction="ltr">Transactions · UTC</text>
+  <text x="720" y="213" fill="#1f2328" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="700" text-anchor="middle">0 tx · 2026-11-21 09:56</text>
+</svg>

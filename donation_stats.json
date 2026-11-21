@@ -1,0 +1,18 @@
+{
+  "updated_at_utc": "2026-11-21T09:56:37Z",
+  "tron_address": "TZ6CDh5UXKKgq8CQbHW6VDxY3fnzQAABbo",
+  "evm_address": "0x0a4C4D067526AcFDb394469D1227754211b90c49",
+  "total_usd": 0,
+  "tron_usd": 0,
+  "evm_usd": 0.0,
+  "charity_share_usd": 0.0,
+  "milestone_goal_usd": 100,
+  "milestone_pct": 0.0,
+  "tx_count": 0,
+  "live_balance_floor_usd": 0.0,
+  "last_blocks": {
+    "base": 60323089,
+    "arbitrum": 526205566
+  },
+  "seen_txs": {}
+}
