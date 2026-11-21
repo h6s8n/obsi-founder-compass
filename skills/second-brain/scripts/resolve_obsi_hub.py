@@ -672,8 +672,9 @@ def resolve_hub(
             f"مغز دوم آماده است ({proj_label}).\n"
             f"آمار زنده: {stats['today_tasks']} تسک امروز · {stats['sprint_tasks']} تسک اسپرینت · {stats['active_cohorts']} کورس فعال · {stats['scorecards_count']} کارنامه."
         )
+        total_items = len(project_tasks["items"]) if project_tasks and project_tasks.get("items") else 0
         opt1 = (
-            f"(Recommended) ادامه {top['badge']} {top['title']} — یا لایه ۳ (ثبت پیشرفت / بستن / بعدی)"
+            f"(Recommended) انجام {top['badge']} {top['title']} — یا انتخاب از بین {total_items} تسک فعال (/obsi next / done)"
             if top
             else "(Recommended) لایه ۳ — اجرای روزمره (ثبت پیشرفت / کار بعدی / برنامه هفته / بستن تسک)"
         )
@@ -690,8 +691,9 @@ def resolve_hub(
             f"Second Brain is ready ({proj_label}).\n"
             f"Live stats: {stats['today_tasks']} today · {stats['sprint_tasks']} sprint · {stats['active_cohorts']} active cohorts · {stats['scorecards_count']} scorecards."
         )
+        total_items = len(project_tasks["items"]) if project_tasks and project_tasks.get("items") else 0
         opt1 = (
-            f"(Recommended) Continue {top['badge']} {top['title']} — or Layer 3 ops (log / done / next)"
+            f"(Recommended) Work on {top['badge']} {top['title']} — or pick from {total_items} active task(s) (/obsi next / done)"
             if top
             else "(Recommended) Layer 3 — Daily Execution (log progress / next task / weekly plan / done)"
         )

@@ -231,8 +231,6 @@ def run_audit(vault_path: str, skills_dir: str) -> dict:
             errors.append(f"Active task `{rel}` ({status}) missing `action:`")
         if today is True and status in ("Done", "Locked"):
             errors.append(f"Task `{rel}` has `today: true` while `status: {status}`")
-        elif today is True and not day:
-            warnings.append(f"Task `{rel}` has `today: true` with empty `day:` (needs user scheduling/review)")
 
         if status == "Locked":
             if not dep:
