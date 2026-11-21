@@ -458,13 +458,13 @@ def resolve_menu(
                 f"پروژه «{detected}» شناسایی شد (هنوز Scorecard ندارد).\n"
                 f"برداشت از والت: {takeaway.splitlines()[0] if takeaway else 'بدون نوت قبلی'}"
             )
-            opts = ["(Recommended) بیان ویژن و شروع ارزیابی کلان", "تغییر به پروژه دیگر"]
+            opts = ["(Recommended) گام ۱: بیان ویژن و هدف پروژه (Vision Intake)", "تغییر به پروژه دیگر"]
         else:
             summary = (
                 f"Detected project '{detected}' — no Macro Scorecard yet.\n"
                 f"Vault takeaway: {takeaway.splitlines()[0] if takeaway else 'No prior notes'}"
             )
-            opts = ["(Recommended) State Vision & start full market audit", "Switch to another project"]
+            opts = ["(Recommended) Step 1: Vision Intake & Mirror", "Switch to another project"]
 
         return {
             "detected_project": detected,
@@ -506,35 +506,31 @@ def resolve_menu(
         state = "in_progress"
 
     if is_fa:
-        if state == "stale":
-            summary = f"پروژه «{detected}» — آخرین ارزیابی {age_days} روز پیش ({lv_str}) بوده است.\nوضعیت فعلی: {active_deep_dive or stage or 'آماده بازبینی'}"
-            options = [f"(Recommended) بازبینی سریع تابلوی {detected}", "ادامه مستقیم بدون ارزیابی مجدد"]
-        elif state == "ready_for_cohorts":
-            summary = f"پروژه «{detected}» — لایه کلان و {len(bundles)} محور اصلی ثبت شده‌اند.\nوضعیت فعلی: {active_deep_dive or 'آماده انتخاب کورس‌ها (/obsi-priority)'}"
-            options = ["(Recommended) رفتن به مرحله بعد: انتخاب کورس‌ها (/obsi-priority)"]
-        else:
-            summary = f"پروژه «{detected}» — روی کارنامه در حال کار هستیم.\nنقطه توقف: {active_deep_dive or stage or 'ادامه گفتگو'}"
-            options = ["(Recommended) ادامه مستقیم از آخرین نقطه توقف"]
-        for idx, b in enumerate(bundles, 1):
-            options.append(f"عمیق‌شدن روی محور {idx}: {b}")
-        options.append("💡 طرح یک موضوع، قرارداد یا تصمیم جدید برای مشورت و طوفان فکری")
-        options.append(f"شروع مجدد ارزیابی کلان «{detected}» از اول")
-        options.append("تغییر به پروژه دیگر")
+        summary = (
+            f"پروژه «{detected}» — وضعیت لایه ۱ (مشاور کلان بازار):\n"
+            f"نقطه توقف: {active_deep_dive or stage or 'کارنامه آماده است'}"
+        )
+        options = [
+            f"(Recommended) گام ۳: بسته‌های تمرکز کلان ({len(bundles)} محور اصلی)",
+            "گام ۲: کارنامه کلان بازار (Market Scorecard)",
+            "گام ۱: آینه ویژن و هدف پروژه (Vision Mirror)",
+            "پایان لایه ۱ و رفتن به لایه ۲: انتخاب کوهورت‌ها (/obsi-priority)",
+            f"شروع مجدد ارزیابی کلان «{detected}» از اول",
+            "تغییر به پروژه دیگر",
+        ]
     else:
-        if state == "stale":
-            summary = f"Project '{detected}' — last full audit was {age_days}d ago ({lv_str}).\nCurrent focus: {active_deep_dive or stage or 'Ready for refresh'}"
-            options = [f"(Recommended) Refresh Scorecard for '{detected}'", "Resume directly without refreshing"]
-        elif state == "ready_for_cohorts":
-            summary = f"Project '{detected}' — Vision & {len(bundles)} Macro Focus Bundles are locked.\nCurrent stage: {active_deep_dive or 'Ready for Cohort design (/obsi-priority)'}"
-            options = ["(Recommended) Move to Layer 2: Cohort design & priority (/obsi-priority)"]
-        else:
-            summary = f"Project '{detected}' — Scorecard session in progress.\nStop point: {active_deep_dive or stage or 'Resume consult'}"
-            options = ["(Recommended) Resume directly from current stop point"]
-        for idx, b in enumerate(bundles, 1):
-            options.append(f"Deep-dive Bundle {idx}: {b}")
-        options.append("💡 Consult / brainstorm on a specific topic, deal, or new decision")
-        options.append(f"Restart full market audit for '{detected}'")
-        options.append("Switch to another project")
+        summary = (
+            f"Project '{detected}' — Layer 1 (30,000-ft Market Consultant):\n"
+            f"Current status: {active_deep_dive or stage or 'Scorecard ready'}"
+        )
+        options = [
+            f"(Recommended) Step 3: Macro Focus Bundles ({len(bundles)} active)",
+            "Step 2: Market Scorecard & Gaps",
+            "Step 1: Vision Mirror & Goal",
+            "Finish Layer 1 -> Enter Layer 2: Cohort Design (/obsi-priority)",
+            f"Restart full market audit for '{detected}'",
+            "Switch to another project",
+        ]
 
     return {
         "detected_project": detected,
