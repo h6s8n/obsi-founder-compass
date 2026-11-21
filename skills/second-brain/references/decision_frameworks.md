@@ -27,3 +27,9 @@ Use 2–3 relevant tools from this reference during planning—never apply all a
 
 ## 5. Base Rate Check (Anti-Planning Fallacy)
 - Verify published empirical base rates before giving timelines or conversion expectations, distinguishing Leading Indicators from Lagging Outcomes.
+
+## 6. Creator & Contributor RevShare Shield (Anti-Burnout & Clear IP)
+When partnering on sweat-equity or revenue-share (e.g. voice talent, co-host, editor) on early-stage zero-revenue channels:
+- **Time-Boxed Season Gate:** Define partnership strictly per season (e.g. `n = 10` episodes), not perpetual indefinite ownership. Review renewal at checkpoint 10.
+- **Explicit Revenue Scope:** Distinguish between delayed platform ad revenue (AdSense) and immediate commercial value (lead bounties, sponsorships). If ad payout is low early on, align incentives with a milestone bounty or lead-share so the contributor doesn't lose momentum.
+- **Clean Walkaway & IP Protection:** The founder retains 100% of channel assets, branding, and future publishing rights. If a contributor steps down, their rev-share applies strictly to the specific episodes they contributed to, preventing channel hostage scenarios.
