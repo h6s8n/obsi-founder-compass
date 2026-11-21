@@ -517,7 +517,6 @@ def resolve_menu(
             "گام ۱: بازبینی آینه ویژن و هدف پروژه (Vision Mirror)",
             "پایان لایه ۱ و رفتن به لایه ۲: انتخاب کوهورت‌ها (/obsi-priority)",
             f"شروع مجدد ارزیابی کلان «{detected}» از اول",
-            "تغییر به پروژه دیگر",
         ]
     else:
         summary = (
@@ -531,7 +530,6 @@ def resolve_menu(
             "Step 1: Vision Mirror & Goal",
             "Finish Layer 1 -> Enter Layer 2: Cohort Design (/obsi-priority)",
             f"Restart full market audit for '{detected}'",
-            "Switch to another project",
         ]
 
     return {
