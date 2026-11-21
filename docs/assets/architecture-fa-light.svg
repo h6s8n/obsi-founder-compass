@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 430" width="780" height="430" role="img" aria-label="معماری ۵لایه قطب‌نمای بنیان‌گذار ابسیدین (روشن)">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#59636e"/>
+    </marker>
+    <style>
+      .title { font-family: Vazirmatn, Segoe UI, Tahoma, Arial, sans-serif; font-size: 13.5px; font-weight: 700; fill: #1f2328; }
+      .tag { font-family: Vazirmatn, Segoe UI, Tahoma, Arial, sans-serif; font-size: 10.5px; font-weight: 700; }
+      .cmd { font-family: Consolas, Menlo, Monaco, monospace; font-size: 13px; font-weight: 700; fill: #1f2328; }
+      .sub { font-family: Vazirmatn, Segoe UI, Tahoma, Arial, sans-serif; font-size: 10.5px; fill: #59636e; }
+      .foot { font-family: Vazirmatn, Segoe UI, Tahoma, Arial, sans-serif; font-size: 11px; fill: #59636e; }
+      .line { fill: none; stroke: #59636e; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="778" height="428" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
+
+  <!-- Top Hub -->
+  <rect x="190" y="20" width="400" height="66" rx="12" fill="#f6f8fa" stroke="#0969da" stroke-width="1.8"/>
+  <text x="390" y="47" text-anchor="middle" class="title">🧭 /obsi — هاب هوشمند ۵لایه و اجرای لایه ۳</text>
+  <text x="390" y="69" text-anchor="middle" class="sub">تشخیص خودکار پروژه · منوی کلیکی · ثبت فوری و بستن تسک</text>
+
+  <!-- Connectors Hub -> Layers -->
+  <path d="M 390 86 L 390 112" class="line"/>
+  <path d="M 103 112 L 677 112" class="line"/>
+  <path d="M 103 112 L 103 135" class="line" marker-end="url(#arrow)"/>
+  <path d="M 294 112 L 294 135" class="line" marker-end="url(#arrow)"/>
+  <path d="M 486 112 L 486 135" class="line" marker-end="url(#arrow)"/>
+  <path d="M 677 112 L 677 135" class="line" marker-end="url(#arrow)"/>
+
+  <rect x="18" y="138" width="170" height="102" rx="10" fill="#f6f8fa" stroke="#1a7f37" stroke-width="1.5"/>
+  <text x="103" y="160" text-anchor="middle" class="tag" fill="#1a7f37">لایه ۰ · راه‌اندازی</text>
+  <text x="103" y="184" text-anchor="middle" class="cmd">/obsi-setup</text>
+  <text x="103" y="206" text-anchor="middle" class="sub">ویزارد ۴ سوالی + گیت</text>
+  <text x="103" y="224" text-anchor="middle" class="sub">تقویم فارسی و انگلیسی</text>
+
+  <rect x="209" y="138" width="170" height="102" rx="10" fill="#f6f8fa" stroke="#9a6700" stroke-width="1.5"/>
+  <text x="294" y="160" text-anchor="middle" class="tag" fill="#9a6700">لایه ۱ · مشاوره کلان</text>
+  <text x="294" y="184" text-anchor="middle" class="cmd">/obsi-consult</text>
+  <text x="294" y="206" text-anchor="middle" class="sub">آینه هدف + فایروال کد</text>
+  <text x="294" y="224" text-anchor="middle" class="sub">شکاف بازار بدون کدزنی</text>
+
+  <rect x="401" y="138" width="170" height="102" rx="10" fill="#f6f8fa" stroke="#8250df" stroke-width="1.5"/>
+  <text x="486" y="160" text-anchor="middle" class="tag" fill="#8250df">لایه ۲ · کوهورت‌ها</text>
+  <text x="486" y="184" text-anchor="middle" class="cmd">/obsi-priority</text>
+  <text x="486" y="206" text-anchor="middle" class="sub">آزمون ۱۴روزه و سهمیه</text>
+  <text x="486" y="224" text-anchor="middle" class="sub">حجم کار کاملاً پیشنهادی</text>
+
+  <rect x="592" y="138" width="170" height="102" rx="10" fill="#f6f8fa" stroke="#cf222e" stroke-width="1.5"/>
+  <text x="677" y="160" text-anchor="middle" class="tag" fill="#cf222e">لایه ۴ · بازرسی</text>
+  <text x="677" y="184" text-anchor="middle" class="cmd">/obsi-inspect</text>
+  <text x="677" y="206" text-anchor="middle" class="sub">ممیزی ادعاهای چت</text>
+  <text x="677" y="224" text-anchor="middle" class="sub">چک ۱ثانیه‌ای سلامت والت</text>
+
+  <!-- Connectors Layers -> Engines -->
+  <path d="M 103 240 L 103 288" class="line" marker-end="url(#arrow)"/>
+  <path d="M 486 240 L 486 260 L 175 260 L 175 288" class="line" marker-end="url(#arrow)"/>
+  <path d="M 294 240 L 294 270 L 390 270 L 390 288" class="line" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <path d="M 677 240 L 677 270 L 647 270 L 647 288" class="line" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+
+  <!-- Engine 0 -->
+  <rect x="18" y="291" width="230" height="102" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.4"/>
+  <text x="133" y="317" text-anchor="middle" class="title">🗂️ والت ابسیدین (Base بومی)</text>
+  <text x="133" y="340" text-anchor="middle" class="sub">بورد امروز · هفتگی · کوهورت‌ها</text>
+  <text x="133" y="359" text-anchor="middle" class="sub">بستن تسک ← بازشدن تسک بعدی</text>
+  <text x="133" y="378" text-anchor="middle" class="sub">۱۰۰٪ لوکال تحت Git</text>
+
+  <!-- Engine 1 -->
+  <rect x="275" y="291" width="230" height="102" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.4"/>
+  <text x="390" y="317" text-anchor="middle" class="title">🧠 حافظه استراتژی</text>
+  <text x="390" y="340" text-anchor="middle" class="sub">کش پلی‌بوک بازار (۹۰ روزه)</text>
+  <text x="390" y="359" text-anchor="middle" class="sub">اسکورکارد زنده (ادامه از توقف)</text>
+  <text x="390" y="378" text-anchor="middle" class="sub">صفر جستجوی تکراری وب</text>
+
+  <!-- Engine 2 -->
+  <rect x="532" y="291" width="230" height="102" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.4"/>
+  <text x="647" y="317" text-anchor="middle" class="title">🔍 موتور راستی‌آزمایی</text>
+  <text x="647" y="340" text-anchor="middle" class="sub">استخراج دلتای چت (transcript)</text>
+  <text x="647" y="359" text-anchor="middle" class="sub">ممیزی YAML، لینک و کانبان</text>
+  <text x="647" y="378" text-anchor="middle" class="sub">شکار ادعای بدون مدرک</text>
+
+  <text x="390" y="414" text-anchor="middle" class="foot">بدون پلاگین جانبی · کاملاً ساکت در چت‌های برنامه‌نویسی · تغییر فایل فقط پس از تایید شما</text>
+</svg>

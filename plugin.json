@@ -1,9 +1,14 @@
 {
   "name": "obsi-founder-compass",
-  "displayName": "Obsi Founder Compass",
+  "displayName": "Obsi Founder Compass — 5-Layer Founder OS for Obsidian",
   "version": "0.1.0",
   "description": "5-layer Hub-and-Spoke Operating System on Native Obsidian Bases + Antigravity Agents: guides multi-project founders & vibe-coders from vision and macro market gaps to time-boxed cohorts, daily execution, and in-flight transcript auditing.",
-  "author": "obsi-founder-compass contributors",
+  "author": {
+    "name": "Hasan Momeni (@h6s8n)",
+    "url": "https://github.com/h6s8n"
+  },
+  "homepage": "https://github.com/h6s8n/obsi-founder-compass",
+  "repository": "https://github.com/h6s8n/obsi-founder-compass",
   "suggestedPrompts": [
     "/obsi",
     "/obsi-setup",
