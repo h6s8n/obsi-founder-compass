@@ -223,6 +223,124 @@ class TestEndToEndScaffoldingAndRouting(unittest.TestCase):
                     f.write("---\ntype: scorecard\nlast_full_audit: 2020-01-01\n---\n")
                 self.assertEqual(rcm.resolve_menu(vault_dir, cwd=app1, lang=lang)["state"], "stale")
 
+    def test_multi_project_monorepo_disambiguation_aliases_and_subfolder_discovery(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault_dir = os.path.join(tmp, "brain_mono")
+            monorepo = os.path.join(tmp, "mono_hub")
+            video_dir = os.path.join(monorepo, "video")
+            news_dir = os.path.join(monorepo, "news")
+            side_app_dir = os.path.join(monorepo, "side_app")
+            docs_misc_dir = os.path.join(monorepo, "docs_misc")
+            for d in (
+                video_dir,
+                news_dir,
+                os.path.join(side_app_dir, ".git"),
+                docs_misc_dir,
+                os.path.join(monorepo, ".git"),
+                os.path.join(monorepo, "node_modules"),
+            ):
+                os.makedirs(d, exist_ok=True)
+            cfg_path = os.path.join(tmp, "brain-os.json")
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    SETUP_SCRIPT,
+                    "--vault",
+                    vault_dir,
+                    "--lang",
+                    "en",
+                    "--pillars",
+                    "Projects,Content",
+                    "--projects",
+                    f"Studio|{monorepo}|Content",
+                    "--config-out",
+                    cfg_path,
+                    "--apply",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+
+            for add_args in (
+                ["--add-project", f"VideoChannel|{video_dir}|Content", "--parent", "Studio", "--aliases", "channel,vid"],
+                ["--add-project", f"Newsletter|{news_dir}|Content", "--parent", "Studio"],
+                ["--add-project", "ToolKit||Content", "--parent", "Studio"],
+            ):
+                p_add = subprocess.run(
+                    [sys.executable, SETUP_SCRIPT, "--vault", vault_dir, *add_args, "--apply"],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                self.assertEqual(p_add.returncode, 0, p_add.stderr)
+
+            hub_mono = roh.resolve_hub(cwd=monorepo, config_path=cfg_path)
+            self.assertEqual(hub_mono["state"], "pick_project")
+            self.assertEqual(hub_mono["workspace_mode"], "multi_project")
+            self.assertEqual(hub_mono["umbrella_project"], "Studio")
+            ws_names = {p["name"] for p in hub_mono["workspace_projects"]}
+            self.assertEqual(ws_names, {"Studio", "VideoChannel", "Newsletter", "ToolKit"})
+            unreg_names = [u["name"] for u in hub_mono["unregistered_subfolders"]]
+            self.assertEqual(unreg_names, ["side_app", "docs_misc"])
+            self.assertTrue(hub_mono["unregistered_subfolders"][0]["is_git_repo"])
+            self.assertIn("side_app (git)", hub_mono["project_tasks_card"])
+
+            hub_alias = roh.resolve_hub(cwd=monorepo, config_path=cfg_path, explicit_project="channel")
+            self.assertEqual(hub_alias["state"], "ready")
+            self.assertEqual(hub_alias["detected_project"], "VideoChannel")
+
+            hub_child = roh.resolve_hub(cwd=video_dir, config_path=cfg_path)
+            self.assertEqual(hub_child["state"], "ready")
+            self.assertEqual(hub_child["detected_project"], "VideoChannel")
+
+            consult_mono = rcm.resolve_menu(vault_dir, cwd=monorepo, lang="en")
+            self.assertEqual(consult_mono["state"], "pick_project")
+            self.assertEqual(consult_mono["workspace_mode"], "multi_project")
+            self.assertEqual([u["name"] for u in consult_mono["unregistered_subfolders"]], ["side_app", "docs_misc"])
+
+            consult_alias = rcm.resolve_menu(vault_dir, cwd=monorepo, explicit_project="vid", lang="en")
+            self.assertEqual(consult_alias["detected_project"], "VideoChannel")
+            self.assertEqual(consult_alias["state"], "new")
+
+            scan_proc = subprocess.run(
+                [sys.executable, SETUP_SCRIPT, "--vault", vault_dir, "--scan-workspace", monorepo],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(scan_proc.returncode, 0, scan_proc.stderr)
+            scan_data = json.loads(scan_proc.stdout)
+            self.assertEqual([u["name"] for u in scan_data["unregistered_subfolders"]], ["side_app", "docs_misc"])
+
+            reg_side = subprocess.run(
+                [sys.executable, SETUP_SCRIPT, "--vault", vault_dir, "--add-project", f"SideApp|{side_app_dir}|Projects", "--apply"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(reg_side.returncode, 0, reg_side.stderr)
+
+            hub_after = roh.resolve_hub(cwd=monorepo, config_path=cfg_path)
+            self.assertEqual({p["name"] for p in hub_after["workspace_projects"]}, {"Studio", "VideoChannel", "Newsletter", "ToolKit", "SideApp"})
+            self.assertEqual([u["name"] for u in hub_after["unregistered_subfolders"]], ["docs_misc"])
+
+            clean_audit = va.run_audit(vault_dir, SKILLS_DIR)
+            self.assertEqual(clean_audit["errors"], [], clean_audit["errors"])
+            self.assertEqual(clean_audit["warnings"], [], clean_audit["warnings"])
+
+            dup_proj = os.path.join(vault_dir, "01-Projects", "DuplicateWs.md")
+            with open(dup_proj, "w", encoding="utf-8") as f:
+                f.write(f"---\ntype: project\nstatus: active\npillar: Projects\nworkspace: \"{side_app_dir.replace(chr(92), chr(92)*2)}\"\nupdated: 2026-11-21\n---\n# DuplicateWs\n```base\nviews:\n  - type: table\n    name: T\n```\n")
+            dup_audit = va.run_audit(vault_dir, SKILLS_DIR)
+            self.assertTrue(any("Duplicate workspace path" in w for w in dup_audit["warnings"]), dup_audit["warnings"])
+
 
 class TestConsultWorkflowAndCache(unittest.TestCase):
     def test_ast_no_local_imports_firewall_and_playbook_cache(self):

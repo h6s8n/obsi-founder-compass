@@ -11,10 +11,11 @@ description: "[Workflow] 5-Layer Obsidian Brain Hub & Layer 3 Daily Execution (`
 Trigger on **`obsi`**, **`/obsi`**, or quick capture/tactical requests. Read `~/.gemini/config/brain-os.json` to locate the user's Vault, follow `second-brain` schemas, and confirm in 1 line before mutating any Vault file.
 
 ## Thin Hub Entry Gate (`resolve_obsi_hub.py`)
-On bare **`/obsi`** (no subcommand), run [resolve_obsi_hub.py](../second-brain/scripts/resolve_obsi_hub.py):
-`python "<second-brain-dir>/scripts/resolve_obsi_hub.py" --cwd "<workspace>" --json`
-Display `summary_2lines` and (if non-empty) `project_tasks_card` (top 5 one-line active tasks for the current project + locked/backlog counts), then call **`ask_question`** with `recommended_options`:
+On `/obsi` (bare or naming a project/alias), run [resolve_obsi_hub.py](../second-brain/scripts/resolve_obsi_hub.py):
+`python "<second-brain-dir>/scripts/resolve_obsi_hub.py" --cwd "<workspace>" [--project "<name-or-alias>"] --json`
+Display `summary_2lines` and (if non-empty) `project_tasks_card`, then call **`ask_question`** with `recommended_options`:
 - **`needs_setup`** -> launch Layer 0 (`obsi-setup`).
+- **`pick_project`** *(monorepo / multi-project workspace)* -> let the user pick a registered sub-project (re-run with `--project` or route to chosen layer) OR choose the option to register an unregistered subfolder via `/obsi-setup` (`obsi-setup` §3).
 - **`ready`** -> let the user pick any of the 5 layers in 1 click:
   - **Layer 0 (`obsi-setup`)** · **Layer 1 (`obsi-consult`)** · **Layer 2 (`obsi-priority`)** · **Layer 3 (`obsi` daily)** · **Layer 4 (`obsi-inspect`)**.
 

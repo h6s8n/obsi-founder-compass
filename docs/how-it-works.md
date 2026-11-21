@@ -38,3 +38,16 @@ Every Vault scaffolded by [`scaffold_brain.py`](../skills/obsi-setup/scripts/sca
 2. **Cache-First Market Playbooks:** [`consult_audit.py`](../skills/obsi-consult/scripts/consult_audit.py) checks [`playbooks/index.json`](../skills/obsi-consult/playbooks/index.json) (`90-day` TTL) before issuing web searches, preventing duplicate research runs.
 3. **No-Code Firewall:** Enforce-checked with `BANNED_TECH_RE` inside `consult_audit.py` — built technology is summarized in one line (*"Product infrastructure is online"*) so strategy conversations stay purely commercial.
 4. **Sequential Task Unlocking:** Tasks in `02-Tasks/<Pillar>/<Project>/` can declare `depends_on: "[[Blocker-Task]]"` and `status: Locked`. Completing the blocker via `/obsi done` automatically promotes dependent cards to `Sprint`.
+
+---
+
+## 4. Multi-Project & Monorepo Disambiguation
+
+Indie founders often manage multiple apps or repositories inside a single umbrella directory or monorepo. Obsi Founder Compass provides native multi-project routing without silent collisions:
+
+1. **Subtree & Exact Containment:** [`resolve_obsi_hub.py`](../skills/second-brain/scripts/resolve_obsi_hub.py) and [`resolve_consult_menu.py`](../skills/obsi-consult/scripts/resolve_consult_menu.py) map directories deterministically:
+   - If `cwd` matches an exact project workspace, it resolves immediately (`state: "ready"` or `state: "new"`).
+   - If `cwd` contains multiple registered sub-projects, it enters `state: "pick_project"` with `workspace_mode: "multi_project"`.
+   - If an umbrella project declares `parent: null` or contains children, tasks from all registered children are aggregated cleanly.
+2. **Bilingual Project Aliases:** Project notes in `01-Projects/` support an `aliases:` YAML frontmatter array (e.g. `aliases: [yt, یوتیوب]`). Passing `/obsi <alias>` or `/obsi-consult <alias>` resolves instantly regardless of language or casing.
+3. **Subfolder Candidate Discovery:** Running in a multi-project workspace automatically inspects subdirectories for `.git` repos, package manifests, or Markdown documents, presenting unregistered folders as one-click candidates to register via `/obsi-setup`.

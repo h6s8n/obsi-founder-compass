@@ -158,6 +158,7 @@ def run_audit(vault_path: str, skills_dir: str) -> dict:
 
     task_status_by_stem: dict[str, str] = {}
     parsed_tasks: list[tuple[str, dict]] = []
+    workspace_owners: dict[str, tuple[str, list[str]]] = {}
 
     for rel, fp in all_md:
         txt = _read_text(fp)
@@ -194,6 +195,14 @@ def run_audit(vault_path: str, skills_dir: str) -> dict:
                 errors.append(f"Project `{rel}` missing `pillar`")
             if "```base" not in txt:
                 errors.append(f"Project `{rel}` missing inline ```base board")
+            ws_raw = str(fm.get("workspace") or "").strip()
+            if ws_raw:
+                ws_norm = os.path.normcase(os.path.normpath(os.path.abspath(ws_raw)))
+                proj_name = os.path.splitext(os.path.basename(fp))[0]
+                if ws_norm not in workspace_owners:
+                    workspace_owners[ws_norm] = (ws_raw, [proj_name])
+                else:
+                    workspace_owners[ws_norm][1].append(proj_name)
 
         if rel.startswith("02-Tasks/"):
             stem = os.path.splitext(os.path.basename(fp))[0]
@@ -203,6 +212,13 @@ def run_audit(vault_path: str, skills_dir: str) -> dict:
     for rel, fp in all_base:
         raw_base = _read_text(fp)
         check_base_spec(rel, raw_base, verified, errors)
+
+    for _, (ws_display, owners) in sorted(workspace_owners.items()):
+        if len(owners) > 1:
+            warnings.append(
+                f"Duplicate workspace path `{ws_display}` shared by: {', '.join(owners)} "
+                "(assign dedicated subfolder workspaces or clear duplicate workspace on logical sub-projects)"
+            )
 
     for rel, fm in parsed_tasks:
         status = str(fm.get("status") or "")

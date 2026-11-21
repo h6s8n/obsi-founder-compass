@@ -52,9 +52,9 @@ agy plugin install .
 
 | Command | What happens when you type it |
 | :--- | :--- |
-| **`/obsi`** | Detects your current project, shows its top active tasks (up to 5 one-liners), and opens the 5-layer menu. |
+| **`/obsi [project]`** | Detects your current project (or disambiguates multi-project monorepos), shows its top active tasks (up to 5 one-liners), and opens the 5-layer menu. |
 | **`/obsi-setup`** | Asks 4 quick clickable questions, previews changes with `--dry-run`, and scaffolds your Obsidian Vault (or adds a new project). |
-| **`/obsi-consult`** | Mirrors your product vision in 4 plain lines, checks cached 90-day playbooks, and finds market/buyer gaps without touching code. |
+| **`/obsi-consult [project]`** | Mirrors your product vision in 4 plain lines, checks cached 90-day playbooks, and finds market/buyer gaps without touching code. |
 | **`/obsi-priority`** | Turns approved strategy bundles into 14-day `Scale / Pivot / Kill` experiments and atomic tasks with optional Light/Medium/Deep pacing. |
 | **`/obsi next` · `/obsi log` · `/obsi done`** | Shows your top unlocked task, logs partial progress cleanly (`Doing`), or marks done and auto-unlocks the next `Locked` task. |
 | **`/obsi-inspect`** | Reads recent chat turns to flag unverified AI claims or blind agreement, and runs a 1-second Vault health audit. |
@@ -71,6 +71,9 @@ No. **Layer 1** (`/obsi-consult`) evaluates each project strictly on its own mar
 
 **Does it interrupt regular coding chats or update Obsidian automatically?**
 No interruptions — all strategy and audit rules stay completely dormant until you type an `/obsi*` command. Every confirmed write updates the exact local Markdown files inside your Vault, so **Obsidian boards (`.base`) update live automatically**.
+
+**How does it handle monorepos, multiple sub-projects, or aliases?**
+If your workspace holds multiple apps or subfolders, `/obsi` lists every registered sub-project, detects candidate unregistered folders, and lets you jump directly with bilingual aliases (e.g. `/obsi <name-or-alias>`). You can also register any subfolder as a child project under an umbrella parent via `/obsi-setup`.
 
 ---
 

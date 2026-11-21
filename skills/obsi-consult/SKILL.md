@@ -14,9 +14,9 @@ Active **ONLY** on **`/obsi-consult`** or explicit strategic consultation. Dorma
 Operate **strictly** on THIS project's Business & Market (Buyers, Competitors, Marketing, Trust, Supply/Partners, Unit Economics, Retention). Never read/cite code (`.php`, `.vue`, `.py`), ports, or engineering checklists; treat built tech as 1 line (*"Website/product infrastructure is online"*). Explain MBA terms simply in 4–6 plain words. Never judge personal weekly bandwidth or other projects here (optional workload pacing belongs strictly in `/obsi-priority`).
 
 ## Step 0: Auto-Detect & Smart Menu (Zero-Recall Entry)
-Locate `<Vault>` via `~/.gemini/config/brain-os.json`. On bare `/obsi-consult` (no project/topic given), run [resolve_consult_menu.py](./scripts/resolve_consult_menu.py):
-`python "<this-skill-dir>/scripts/resolve_consult_menu.py" --cwd "<workspace>" --json`
-Show `summary_2lines` and invoke **`ask_question`** with `recommended_options` (`ready_for_cohorts` / `in_progress` / `new` / `stale` / `pick_project`). Explicit shortcuts bypass the menu.
+Locate `<Vault>` via `~/.gemini/config/brain-os.json`. On `/obsi-consult` (bare or naming a project/alias), run [resolve_consult_menu.py](./scripts/resolve_consult_menu.py):
+`python "<this-skill-dir>/scripts/resolve_consult_menu.py" --cwd "<workspace>" [--project "<target-or-alias>"] --json`
+Show `summary_2lines` and invoke **`ask_question`** with `recommended_options` (`ready_for_cohorts` / `in_progress` / `new` / `stale` / `pick_project` — multi-project workspaces also list unregistered subfolders for `/obsi-setup`). Explicit unmentioned topics bypass the menu.
 
 ## 3-Route Stateful Resume + Vision Mirror
 1. **Route A (`new` / full refresh):**

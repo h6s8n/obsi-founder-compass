@@ -12,13 +12,13 @@
 
 | دستور | لایه / حالت | عملکرد |
 | :--- | :--- | :--- |
-| `/obsi` | هاب هوشمند + لایه ۳ | با [`resolve_obsi_hub.py`](../../skills/second-brain/scripts/resolve_obsi_hub.py) پروژه فعلی را می‌شناسد و منوی ۵ لایه می‌آورد |
+| `/obsi [پروژه]` | هاب هوشمند + لایه ۳ | با [`resolve_obsi_hub.py`](../../skills/second-brain/scripts/resolve_obsi_hub.py) پروژه فعلی را می‌شناسد (با پشتیبانی از مونو‌ریپو) و منوی ۵ لایه می‌آورد |
 | `obsi <متن>` | ثبت فوری | نوع یادداشت (تسک، ایده، پروژه، کوهورت) را تشخیص داده و با تایید ۱خطی ذخیره می‌کند |
 | `/obsi next` | اجرای روزانه | مهم‌ترین تسک باز (بدون قفل) آماده انجام همین الان را نشان می‌دهد |
 | `/obsi tactical` | برنامه‌ریزی هفتگی | چیدمان روزهای هفته (`Sat–Fri` یا `Mon–Sun`) با `action:` مشخص |
 | `/obsi done [task]` | تکمیل + بازگشایی | `status: Done` را ثبت و تسک‌های وابسته (`Locked`) را خودکار به `Sprint` منتقل می‌کند |
 | `/obsi-setup` | لایه ۰ راه‌اندازی | ویزارد ۴ سوالی ساخت والت یا افزودن پروژه و ستون جدید |
-| `/obsi-consult` | لایه ۱ مشاوره | با [`resolve_consult_menu.py`](../../skills/obsi-consult/scripts/resolve_consult_menu.py) وضعیت اسکورکارد (`new` / `in_progress` / `ready_for_cohorts` / `stale`) را می‌آورد |
+| `/obsi-consult [پروژه]` | لایه ۱ مشاوره | با [`resolve_consult_menu.py`](../../skills/obsi-consult/scripts/resolve_consult_menu.py) وضعیت اسکورکارد (`new` / `in_progress` / `ready_for_cohorts` / `stale`) را می‌آورد |
 | `/obsi-priority` | لایه ۲ کوهورت‌ها | بسته‌های تمرکز را با گزینه‌های پیشنهادی حجم کار به کوهورت ۱۴روزه تبدیل می‌کند |
 | `/obsi-inspect` | لایه ۴ بازرسی | ممیزی دلتای چت (`--since-last-inspect`) یا چک کامل سلامت والت (`/obsi-inspect vault`) |
 
@@ -62,7 +62,18 @@ python -B skills/obsi-setup/scripts/scaffold_brain.py \
   --vault ~/Obsidian/FounderBrain \
   --add-project "CreatorTool|/path/to/tool|Content" --apply
 
-# بررسی خروجی JSON هاب و منوی مشاور
-python -B skills/second-brain/scripts/resolve_obsi_hub.py --cwd /path/to/acme --json
-python -B skills/obsi-consult/scripts/resolve_consult_menu.py --cwd /path/to/acme --json
+# اسکن ورک‌اسپیس برای کشف زیرپوشه‌های کاندید جهت ثبت
+python -B skills/obsi-setup/scripts/scaffold_brain.py \
+  --vault ~/Obsidian/FounderBrain \
+  --scan-workspace /path/to/monorepo --json
+
+# افزودن زیرپروژه به یک پروژه مادر با نام‌های مستعار
+python -B skills/obsi-setup/scripts/scaffold_brain.py \
+  --vault ~/Obsidian/FounderBrain \
+  --add-project "SubApp|/path/to/monorepo/subapp|Projects" \
+  --parent "AcmeSaaS" --aliases "sub,mobile-app" --apply
+
+# بررسی خروجی JSON هاب و منوی مشاور (با امکان تعیین پروژه یا نام مستعار)
+python -B skills/second-brain/scripts/resolve_obsi_hub.py --cwd /path/to/monorepo --project "SubApp" --json
+python -B skills/obsi-consult/scripts/resolve_consult_menu.py --cwd /path/to/monorepo --project "sub" --json
 ```

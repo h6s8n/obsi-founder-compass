@@ -223,6 +223,7 @@ You are auditing high-level business/strategy progress for THIS single project O
 Allowed reads ONLY inside `{vault_path}`:
 - `00-Focus/00-North-Star.md` (to check alignment with this project's goal only)
 - Project note for `{project}` under `01-Projects/` (and existing `{os.path.join(scorecards_abs, f'{project}.md')}` if it exists)
+- If the project note links a `parent:` umbrella hub or an active `cohort:` under `00-Focus/Cohorts/`, read those strategy notes as well (still strictly NO `Monthly-Plans/` and NO source code).
 - Any marketing strategy note in `03-Marketing/` relevant to `{project}`
 
 Founder Vision Statement:

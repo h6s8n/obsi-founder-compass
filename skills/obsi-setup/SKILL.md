@@ -23,4 +23,11 @@ Then:
 3. Run `--apply --git-init --config-out "<user-home>/.gemini/config/brain-os.json" --playbooks-dir "<sibling-obsi-consult-playbooks>"` (idempotent; skips existing notes), then invite the user into `/obsi-consult`.
 
 ## 2. Add Project / Pillar to Existing Vault
-Run `scaffold_brain.py --vault "<vault>" --add-project "<Name>|<workspace>|<Pillar>" --dry-run`, confirm in 1 line, apply with `--apply`, and offer to launch `/obsi-consult <Name>`.
+Run `scaffold_brain.py --vault "<vault>" --add-project "<Name>|<workspace>|<Pillar>" [--parent "<Umbrella>"] [--aliases "<a1,a2>"] --dry-run`, confirm in 1 line, apply with `--apply`, and offer `/obsi-consult <Name>`.
+
+## 3. Multi-Project Workspace Subfolder Discovery
+When `/obsi` or `/obsi-setup` runs inside a workspace with multiple/unregistered folders:
+1. Run `python "<this-skill-dir>/scripts/scaffold_brain.py" --vault "<vault>" --scan-workspace "<cwd>"` (read-only).
+2. Present `unregistered_subfolders` via `ask_question` (multi-select) so the user chooses which folders to register as separate projects now (or ignore for later).
+3. Ask whether each selected folder should be standalone (`--add-project "Name|path|Pillar"`) or grouped under an existing umbrella (`--parent "<Umbrella>"`), optionally capturing `--aliases`.
+4. Preview with `--dry-run`, confirm in 1 line, apply with `--apply`, and offer `/obsi-consult <Name>`.

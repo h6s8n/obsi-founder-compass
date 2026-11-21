@@ -36,7 +36,7 @@ area: Product          # Product | Backend | Frontend | DevOps | Marketing | SEO
 created: 2026-11-21
 ---
 ```
-**Project (`01-Projects/**/*.md`):** MUST set `type: project`, `pillar:`, `workspace:`, and embed an inline `` ```base `` board.
+**Project (`01-Projects/**/*.md`):** MUST set `type: project`, `pillar:`, `workspace:`, and embed an inline `` ```base `` board; optionally set `aliases:` (multilingual/alias lookup) and `parent: "[[<Umbrella>]]"` for monorepo sub-projects.
 
 ## Core Laws & References
 1. **SSOT:** Keep metrics logs strictly inside their `Cohort` note; keep `00-Home.md` 100% live-driven.

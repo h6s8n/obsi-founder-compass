@@ -12,14 +12,146 @@ import os
 import re
 import subprocess
 import sys
+import yaml
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+FM_RE = re.compile(r"^---\r?\n(.*?)\r?\n---", re.DOTALL)
+WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
+IGNORE_WORKSPACE_DIRS = {
+    ".git",
+    ".github",
+    ".vscode",
+    ".idea",
+    ".agents",
+    ".agent-sessions",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "env",
+    "dist",
+    "build",
+    "target",
+    "out",
+    ".next",
+    ".nuxt",
+    "coverage",
+    "tmp",
+    "temp",
+    "scratch",
+    "logs",
+    "cache",
+    ".cache",
+    "vendor",
+    "bin",
+    "obj",
+}
 
 
 def slugify_project(name: str) -> str:
     clean = re.sub(r"[\\/:*?\"<>|]+", "-", name.strip())
     return clean or "Project"
+
+
+def _norm_path(path: str) -> str:
+    return os.path.normcase(os.path.normpath(os.path.abspath(path)))
+
+
+def _parse_frontmatter(txt: str) -> dict:
+    m = FM_RE.match(txt)
+    if not m:
+        return {}
+    try:
+        data = yaml.safe_load(m.group(1))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _extract_link_stem(raw) -> str:
+    txt = str(raw or "").strip()
+    if not txt:
+        return ""
+    m = WIKILINK_RE.search(txt)
+    return m.group(1).strip() if m else txt
+
+
+def scan_workspace_subfolders(vault_path: str, workspace_dir: str) -> dict:
+    ws_abs = os.path.abspath(workspace_dir)
+    ws_norm = _norm_path(ws_abs)
+    projects_dir = os.path.join(vault_path, "01-Projects")
+    all_projects: list[dict] = []
+
+    if os.path.isdir(projects_dir):
+        for root, _, files in os.walk(projects_dir):
+            for fn in sorted(files):
+                if not fn.endswith(".md"):
+                    continue
+                fp = os.path.join(root, fn)
+                with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                    fm = _parse_frontmatter(f.read())
+                if fm.get("type") != "project":
+                    continue
+                all_projects.append(
+                    {
+                        "name": os.path.splitext(fn)[0],
+                        "workspace": str(fm.get("workspace") or "").strip(),
+                        "parent": _extract_link_stem(fm.get("parent")),
+                        "pillar": str(fm.get("pillar") or "").strip(),
+                        "status": str(fm.get("status") or "").strip(),
+                        "file": os.path.relpath(fp, vault_path).replace("\\", "/"),
+                    }
+                )
+
+    matched_root_names = {
+        p["name"].lower()
+        for p in all_projects
+        if p["workspace"] and _norm_path(p["workspace"]) == ws_norm
+    }
+    registered_in_workspace: list[dict] = []
+    for p in all_projects:
+        p_ws = p["workspace"]
+        p_norm = _norm_path(p_ws) if p_ws else ""
+        in_ws = bool(p_norm and (p_norm == ws_norm or p_norm.startswith(ws_norm + os.sep)))
+        by_parent = bool(p["parent"] and p["parent"].lower() in matched_root_names)
+        if in_ws or by_parent:
+            registered_in_workspace.append(p)
+
+    all_reg_ws = [_norm_path(p["workspace"]) for p in all_projects if p["workspace"]]
+    unregistered_subfolders: list[dict] = []
+    if os.path.isdir(ws_abs):
+        try:
+            entries = list(os.scandir(ws_abs))
+        except OSError:
+            entries = []
+        for entry in entries:
+            try:
+                if not entry.is_dir():
+                    continue
+            except OSError:
+                continue
+            if entry.name.startswith(".") or entry.name.lower() in IGNORE_WORKSPACE_DIRS:
+                continue
+            entry_norm = _norm_path(entry.path)
+            if any(rw == entry_norm or rw.startswith(entry_norm + os.sep) for rw in all_reg_ws):
+                continue
+            unregistered_subfolders.append(
+                {
+                    "name": entry.name,
+                    "path": os.path.abspath(entry.path),
+                    "is_git_repo": os.path.isdir(os.path.join(entry.path, ".git")),
+                }
+            )
+    unregistered_subfolders.sort(key=lambda d: (not d["is_git_repo"], d["name"].lower()))
+
+    return {
+        "workspace": ws_abs,
+        "vault": vault_path,
+        "registered_in_workspace": registered_in_workspace,
+        "unregistered_subfolders": unregistered_subfolders,
+    }
 
 
 def build_base_files(lang: str) -> dict[str, str]:
@@ -398,21 +530,31 @@ views:
     }
 
 
-def render_project_hub(name: str, workspace: str, pillar: str, today: str) -> str:
-    task_folder = f"02-Tasks/{pillar}/{name}"
+def render_project_hub(
+    name: str,
+    workspace: str,
+    pillar: str,
+    today: str,
+    parent: str = "",
+    aliases: list[str] | None = None,
+) -> str:
+    task_folder = f"02-Tasks/{parent}/{name}" if parent else f"02-Tasks/{pillar}/{name}"
     ws_val = workspace.replace("\\", "\\\\") if workspace else ""
+    parent_line = f'parent: "[[{parent}]]"\n' if parent else ""
+    aliases_line = f"aliases: {json.dumps(aliases, ensure_ascii=False)}\n" if aliases else ""
+    parent_hub_link = f" | Parent: [[{parent}]]" if parent else ""
     return f"""---
 type: project
 status: active
 pillar: {pillar}
 area: Product
-workspace: "{ws_val}"
+{parent_line}{aliases_line}workspace: "{ws_val}"
 updated: {today}
 ---
 
 # {name}
 
-> Hub: [[Projects MOC]] | Pillar: [[Pillars MOC]]
+> Hub: [[Projects MOC]] | Pillar: [[Pillars MOC]]{parent_hub_link}
 
 ## Live Task Board
 ```base
@@ -829,6 +971,9 @@ def main() -> None:
     parser.add_argument("--pillars", default="Projects,Content,Self,Family", help="Comma-separated pillar names")
     parser.add_argument("--projects", default="", help="Comma-separated `Name|workspace|Pillar` entries")
     parser.add_argument("--add-project", default="", help="Add single `Name|workspace|Pillar` into existing Vault")
+    parser.add_argument("--parent", default="", help="Optional parent umbrella project name for --add-project")
+    parser.add_argument("--aliases", default="", help="Optional comma-separated aliases for --add-project")
+    parser.add_argument("--scan-workspace", default="", help="Inspect registered projects & unregistered subfolders in workspace (read-only)")
     parser.add_argument("--config-out", default="", help="Optional path to write brain-os.json")
     parser.add_argument("--playbooks-dir", default="", help="Playbooks directory recorded in config-out")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without mutating disk")
@@ -837,15 +982,23 @@ def main() -> None:
     args = parser.parse_args()
 
     vault = os.path.abspath(args.vault)
+    if args.scan_workspace:
+        print(json.dumps(scan_workspace_subfolders(vault, args.scan_workspace), ensure_ascii=False, indent=2))
+        return
+
     today = datetime.date.today().isoformat()
     pillars = [p.strip() for p in args.pillars.split(",") if p.strip()] or ["Projects", "Content", "Self", "Family"]
     default_pillar = pillars[0]
 
     planned: dict[str, str] = {}
     if args.add_project:
+        parent = slugify_project(args.parent) if args.parent.strip() else ""
+        aliases = [a.strip() for a in re.split(r"[,،]", args.aliases) if a.strip()] if args.aliases.strip() else None
         for name, ws, pillar in parse_project_specs(args.add_project, default_pillar):
-            planned[f"01-Projects/{name}.md"] = render_project_hub(name, ws, pillar, today)
-            planned[f"02-Tasks/{pillar}/{name}/.gitkeep"] = ""
+            proj_rel = f"01-Projects/{parent}/{name}.md" if parent else f"01-Projects/{name}.md"
+            task_rel = f"02-Tasks/{parent}/{name}/.gitkeep" if parent else f"02-Tasks/{pillar}/{name}/.gitkeep"
+            planned[proj_rel] = render_project_hub(name, ws, pillar, today, parent=parent, aliases=aliases)
+            planned[task_rel] = ""
     else:
         projects = parse_project_specs(args.projects, default_pillar)
         planned, _ = build_scaffold_files(args.lang, pillars, projects, today)
