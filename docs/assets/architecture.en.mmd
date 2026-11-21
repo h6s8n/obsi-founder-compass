@@ -1,12 +1,20 @@
 flowchart TD
-    HUB["🧭 /obsi — Smart Hub &amp; Layer 3 Execution"]
+    U["💬 Open any workspace + type /obsi"] --> R{"Project registered<br/>in Vault?"}
+    R -- "No Vault / New project" --> L0["Layer 0 · /obsi-setup<br/>4-question wizard · Link project"]
+    R -- "Yes" --> M["5-Layer Smart Menu · ask_question"]
 
-    HUB --> L0["Layer 0 · /obsi-setup<br/>4-Question Onboarding Wizard"]
-    HUB --> L1["Layer 1 · /obsi-consult<br/>Vision Mirror + No-Code Firewall"]
-    HUB --> L2["Layer 2 · /obsi-priority<br/>Advisory 14d Scale/Pivot/Kill Cohorts"]
-    HUB --> L4["Layer 4 · /obsi-inspect<br/>Delta Transcript + Vault Auditor"]
+    subgraph Strategy["🎯 Strategy → Cohorts"]
+        L1["Layer 1 · /obsi-consult<br/>Vision Mirror + No-Code Firewall"] --> SC[("Scorecards + 90d Playbooks")]
+        L1 --> L2["Layer 2 · /obsi-priority<br/>14d Scale/Pivot/Kill · Advisory pacing"]
+    end
 
-    L0 --> VAULT[("🗂️ Native Obsidian Bases Vault<br/>(Today · Weekly · Cohorts · Projects)")]
-    L2 --> VAULT
-    L1 <--> MEM[("🧠 Strategy Memory<br/>Playbook Cache (90d TTL) + Scorecards")]
-    L4 <--> TRUTH[("🔍 Truth &amp; Integrity Engine<br/>extract_session_steps.py + vault_audit.py")]
+    subgraph Daily["⚡ Daily Execution + Truth Audit"]
+        L3["Layer 3 · /obsi next + done<br/>Top unlocked task + Auto-unlock"] --> V[("Native Obsidian Bases Vault")]
+        L4["Layer 4 · /obsi-inspect<br/>Delta chat audit · 1s health check"] --> TR[("transcript.jsonl + vault_audit.py")]
+    end
+
+    M --> L1
+    M --> L3
+    M --> L4
+    L0 --> V
+    L2 --> V

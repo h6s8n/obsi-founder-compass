@@ -1,0 +1,43 @@
+name: Watch-Only Donation Badge
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main script
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      - name: Checkout badges branch
+        uses: actions/checkout@v4
+        with:
+          ref: badges
+          path: badges
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Poll watch-only addresses & render SVG badge
+        working-directory: badges
+        run: python -B ../main/scripts/update_donation_stats.py --state-out donation_stats.json --svg-out donation_badge.svg
+
+      - name: Commit updated badge if changed
+        working-directory: badges
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add donation_stats.json donation_badge.svg donation_meter_dark.svg donation_meter_light.svg donation_meter_fa_dark.svg donation_meter_fa_light.svg
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(badges): update watch-only donation total [skip ci]"
+            git push origin badges
+          fi

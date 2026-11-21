@@ -7,7 +7,7 @@
 
 > **Your Antigravity agent turns messy founder ideas and multi-project chaos into one clear path — inside Native Obsidian Bases, zero third-party plugins, 100% local Markdown + Git.**
 
-Building two or three startups while shipping features every night, only to wake up with scattered notes, stale tasks, and AI chats that drift back into CSS tweaks instead of finding your first paying buyers? **Obsi Founder Compass** gives you a 5-layer Hub-and-Spoke compass: from raw vision and market gaps down to time-boxed validation cohorts, daily unlocked tasks, and an in-flight chat auditor — while staying completely silent during normal coding.
+Building two or three startups while shipping features every night, only to wake up with scattered notes, stale tasks, and AI chats that drift back into CSS tweaks instead of finding your first paying buyers? **Obsi Founder Compass** gives you a 5-layer Hub-and-Spoke compass — from market gaps down to daily unlocked tasks and truth auditing — while staying completely silent during normal coding.
 
 ---
 
@@ -17,9 +17,18 @@ Building two or three startups while shipping features every night, only to wake
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-en-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/architecture-en-light.svg">
-  <img alt="Obsi Founder Compass flow: /obsi hub -> L0 setup, L1 consult, L2 priority, L4 inspect -> Vault, Strategy Cache &amp; Truth Engine" src="docs/assets/architecture-en-dark.svg" width="680">
+  <img alt="Obsi Founder Compass flow: /obsi → new or registered project → 5-layer menu → strategy, cohorts, daily tasks &amp; truth audit" src="docs/assets/architecture-en-dark.svg" width="640">
 </picture>
 </p>
+
+---
+
+## ✅ Requirements
+
+* **[Obsidian](https://obsidian.md)** — with built-in **Bases** enabled (zero community plugins needed)
+* **Antigravity** — IDE or `agy` CLI
+* **Python 3.10+** — plus `pip install pyyaml`
+* **Git** — tracks your local Vault history automatically
 
 ---
 
@@ -28,44 +37,64 @@ Building two or three startups while shipping features every night, only to wake
 ```bash
 git clone https://github.com/h6s8n/obsi-founder-compass.git && cd obsi-founder-compass
 
-# 1. Install the plugin into Antigravity
+# 1. Install the plugin globally into Antigravity
 agy plugin install .
 
-# 2. Reload Antigravity IDE, open any project workspace, and type:
+# 2. Reload Antigravity IDE, open ANY workspace, and type:
 #    /obsi
 ```
 
-That's it. If you don't have a Vault yet, a 4-question interactive wizard sets everything up cleanly after showing you a dry-run preview.
+**Works in brand-new projects too:** Because the plugin installs globally, `/obsi` works in every folder you open. Registered Vault projects are detected automatically; if you open a brand-new folder, `/obsi` still launches cleanly and lets you link it to your Vault in one click via Layer 0 (`/obsi-setup`).
+
+---
+
+## ⚡ Commands in one line (what happens when you run them)
+
+| Command | What happens when you type it |
+| :--- | :--- |
+| **`/obsi`** | Detects your current workspace project (or offers 1-click linking if new) and opens the clickable 5-layer hub menu. |
+| **`/obsi-setup`** | Asks 4 quick clickable questions, previews changes with `--dry-run`, and scaffolds your Obsidian Vault (or adds a new project). |
+| **`/obsi-consult`** | Mirrors your product vision in 4 plain lines, checks cached 90-day playbooks, and finds market/buyer gaps without touching code. |
+| **`/obsi-priority`** | Turns approved strategy bundles into 14-day `Scale / Pivot / Kill` experiments and atomic tasks with optional Light/Medium/Deep pacing. |
+| **`/obsi next` · `/obsi done`** | Surfaces your single top unblocked task to do now; marking it done automatically unlocks dependent `Locked` tasks. |
+| **`/obsi-inspect`** | Reads recent chat turns to flag unverified AI claims or blind agreement, and runs a 1-second Vault health audit. |
 
 ---
 
 ## 💬 How does it work? (plain words)
 
-**How do I organize multiple projects without drowning in Obsidian plugins?**
-Run `/obsi-setup` (or type `/obsi` on first launch). Four quick clickable questions build a clean Git-tracked Vault powered 100% by **Native Obsidian Bases** (`.base` kanbans + inline project boards) with your calendar choice (`en` Mon–Sun or `fa` Sat–Fri) — zero community plugins needed.
+**How does `/obsi-consult` stop AI from drifting into code tweaks?**
+It enforces a strict **No-Code Firewall**: your built product is summarized in one line, so strategy sessions look purely at buyers, competitors, pricing, and trust. Verified findings are cached in `playbooks/` (`90-day` TTL) so you never pay for duplicate web searches.
 
-**How does `/obsi-consult` stop AI from drifting into code reviews?**
-Every project gets a **Vision Mirror Gate** (4 plain lines confirmed by you first) and a strict **No-Code Firewall**: strategy sessions look purely at buyers, competitors, pricing, supply, and trust — never source code or server configs. Verified market findings are cached in `playbooks/` (`90-day` TTL) so the agent never wastes searches repeating the same research.
+**Will it lecture me to kill projects or manage my calendar?**
+No. **Layer 1** (`/obsi-consult`) evaluates each project strictly on its own market merits (**No Capacity Policing**). Only in **Layer 2** (`/obsi-priority`) do you see neutral pacing options alongside 14-day Cohorts — you always choose.
 
-**Will it lecture me about working on too many projects?**
-No. **Layer 1** (`/obsi-consult`) evaluates each startup strictly on its own market merits (**No Capacity Policing**). Only when you step into **Layer 2** (`/obsi-priority`) do you get optional Light/Medium/Deep pacing proposals alongside concrete 14-day **Cohorts** (`Scale / Pivot / Kill` gates). You always decide what runs.
+**Does it interrupt regular coding chats or send my notes anywhere?**
+No. All strategy and audit rules stay completely dormant until you type an `/obsi*` command. Everything lives locally as plain Markdown under Git.
 
-**What do I actually type every day?**
-Just `/obsi`. It auto-detects which workspace folder you're sitting in and pops up a clickable menu across all 5 layers — or jump straight to daily execution with `/obsi next` (top unblocked task) and `/obsi done` (marks complete and unlocks any dependent `Locked` card).
+---
 
-**How do I catch AI hallucinations or blind agreement?**
-Run `/obsi-inspect` mid-conversation. It reads only the new chat turns since your last inspection (`transcript.jsonl`), cross-checks cited URLs and numbers, flags any unverified guesses, and runs a 1-second deterministic Vault audit (`vault_audit.py`).
+## 🤝 Open-Source & Contributing
 
-**Does it interrupt my regular coding sessions or send my notes anywhere?**
-No. Consultation and audit rules stay completely dormant until you type an `/obsi*` command. Every task, scorecard, decision log, and playbook stays on your own machine as plain Markdown under Git.
+This repository is MIT-licensed and built for community collaboration. Contributions are warmly welcomed — especially:
+- **Anonymized Market Playbooks** (`skills/obsi-consult/playbooks/`) with verified benchmarks and URLs.
+- **Calendar / Language Templates** inside `scaffold_brain.py`.
+- **Unit & Integrity Tests** or bug fixes across OS/Obsidian Bases edge cases.
+
+Before opening a Pull Request, verify zero personal leakage and strict plugin validity locally:
+
+```bash
+python -B -m unittest discover -s tests -v
+agy plugin validate . --strict
+```
 
 ---
 
 ## 📚 Go deeper
 
-- 🧠 **[How the 5-layer system works](docs/how-it-works.md)** — Native Bases schema, No-Code Firewall, Playbook Cache, Scorecards, and auto-unlocks.
-- 🧭 **[Commands, CLI scripts & config](docs/commands.md)** — `/obsi`, `/obsi-setup`, `/obsi-consult`, `/obsi-priority`, `/obsi-inspect`, and `brain-os.json`.
-- 🧪 **[Testing & zero-leakage checks](docs/verification.md)** — Automated E2E test suite, deterministic Vault auditor, and `agy plugin validate`.
+- 🧠 **[How the 5-layer system works](docs/how-it-works.md)** — Native Bases schema, No-Code Firewall, Playbook Cache, and auto-unlocks.
+- 🧭 **[Commands, CLI scripts & config](docs/commands.md)** — Full command options and `~/.gemini/config/brain-os.json`.
+- 🧪 **[Testing & zero-leakage checks](docs/verification.md)** — E2E scaffolding suite, Vault auditor, and hygiene rules.
 
 ---
 
@@ -73,20 +102,20 @@ No. Consultation and audit rules stay completely dormant until you type an `/obs
 
 ## ☕ Buy Me a Coffee (On-Chain Support)
 
-[![Live On-Chain Donations](https://raw.githubusercontent.com/h6s8n/antigravity-skill-compass/badges/donation_badge.svg)](https://tronscan.org/#/address/TZ6CDh5UXKKgq8CQbHW6VDxY3fnzQAABbo)
+[![Live On-Chain Donations](https://raw.githubusercontent.com/h6s8n/obsi-founder-compass/badges/donation_badge.svg)](https://tronscan.org/#/address/TZ6CDh5UXKKgq8CQbHW6VDxY3fnzQAABbo)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/h6s8n/antigravity-skill-compass/badges/donation_meter_dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/h6s8n/antigravity-skill-compass/badges/donation_meter_light.svg">
-  <img alt="Live On-Chain Wallet Gauge (Empty vs Filled + 50% Cancer Care Split)" src="https://raw.githubusercontent.com/h6s8n/antigravity-skill-compass/badges/donation_meter_dark.svg" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/h6s8n/obsi-founder-compass/badges/donation_meter_dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/h6s8n/obsi-founder-compass/badges/donation_meter_light.svg">
+  <img alt="Live On-Chain Wallet Gauge (Empty vs Filled + 50% Cancer Care Split)" src="https://raw.githubusercontent.com/h6s8n/obsi-founder-compass/badges/donation_meter_dark.svg" width="100%">
 </picture>
 
 If this 5-layer Obsidian Vault architecture, the No-Code Strategy Firewall, or the in-flight transcript inspector helped you stop context-switching and ship real traction faster:
 
 - ⭐ **Star this repository** to help fellow indie founders and vibe-coders find plugin-free workflows.
-- 🤝 **Contribute:** PRs adding anonymized industry Playbooks, localized calendar/template packs, or CI verification checks are warmly welcomed under the [MIT License](LICENSE).
+- 🤝 **Contribute:** Open an Issue or PR under the [MIT License](LICENSE).
 - ☕ **Buy me a coffee (Direct On-Chain Transfers):**
-  Support the project instantly with low-fee direct transfers to the shared watch-only addresses below (verified live on-chain on the tracker gauge above):
+  Support the project instantly with low-fee direct transfers to the public watch-only addresses below. Every incoming transfer is tracked automatically and updated on the live meter above by [.github/workflows/donation-tracker.yml](.github/workflows/donation-tracker.yml):
 
 | Network / Accepted Assets | Public Wallet Address | Explorer |
 | :--- | :--- | :--- |
