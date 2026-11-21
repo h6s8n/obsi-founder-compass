@@ -511,9 +511,10 @@ def resolve_menu(
             f"نقطه توقف: {active_deep_dive or stage or 'کارنامه آماده است'}"
         )
         options = [
-            f"(Recommended) گام ۳: بسته‌های تمرکز کلان ({len(bundles)} محور اصلی)",
+            "(Recommended) اضافه کردن بحث یا تصمیم کلان جدید",
+            f"گام ۳: بررسی بسته‌های تمرکز کلان ({len(bundles)} محور فعال)",
             "گام ۲: کارنامه کلان بازار (Market Scorecard)",
-            "گام ۱: آینه ویژن و هدف پروژه (Vision Mirror)",
+            "گام ۱: بازبینی آینه ویژن و هدف پروژه (Vision Mirror)",
             "پایان لایه ۱ و رفتن به لایه ۲: انتخاب کوهورت‌ها (/obsi-priority)",
             f"شروع مجدد ارزیابی کلان «{detected}» از اول",
             "تغییر به پروژه دیگر",
@@ -524,7 +525,8 @@ def resolve_menu(
             f"Current status: {active_deep_dive or stage or 'Scorecard ready'}"
         )
         options = [
-            f"(Recommended) Step 3: Macro Focus Bundles ({len(bundles)} active)",
+            "(Recommended) Add a new macro discussion or strategic decision",
+            f"Step 3: Macro Focus Bundles ({len(bundles)} active)",
             "Step 2: Market Scorecard & Gaps",
             "Step 1: Vision Mirror & Goal",
             "Finish Layer 1 -> Enter Layer 2: Cohort Design (/obsi-priority)",
