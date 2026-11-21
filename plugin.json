@@ -1,0 +1,12 @@
+{
+  "name": "obsi-founder-compass",
+  "displayName": "Obsi Founder Compass",
+  "version": "0.1.0",
+  "description": "5-layer Hub-and-Spoke Operating System on Native Obsidian Bases + Antigravity Agents: guides multi-project founders & vibe-coders from vision and macro market gaps to time-boxed cohorts, daily execution, and in-flight transcript auditing.",
+  "author": "obsi-founder-compass contributors",
+  "suggestedPrompts": [
+    "/obsi",
+    "/obsi-setup",
+    "/obsi-consult"
+  ]
+}

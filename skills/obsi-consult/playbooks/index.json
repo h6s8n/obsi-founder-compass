@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "default_ttl_days": 90,
+  "entries": [
+    {
+      "slug": "b2b-saas-mvp-launch",
+      "title": "B2B SaaS MVP Launch, PMF Signals & Early Conversion Benchmarks",
+      "file": "b2b-saas-mvp-launch.md",
+      "last_verified": "2026-11-21",
+      "ttl_days": 90,
+      "geo": "Global",
+      "keywords": [
+        "saas",
+        "b2b",
+        "mvp",
+        "software",
+        "subscription",
+        "freemium",
+        "free trial",
+        "design partners",
+        "pmf"
+      ],
+      "sources": [
+        "https://www.lennysnewsletter.com",
+        "https://www.navattic.com",
+        "https://artisangrowthstrategies.com"
+      ]
+    }
+  ]
+}
