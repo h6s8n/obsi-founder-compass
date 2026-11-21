@@ -102,6 +102,52 @@ def _norm_path(path: str) -> str:
     return os.path.normcase(os.path.normpath(os.path.abspath(path)))
 
 
+def extract_project_takeaway(project_info: dict, is_fa: bool = False) -> str:
+    fp = project_info.get("path")
+    if not fp or not os.path.exists(fp):
+        return "هیچ یادداشت پروژه‌ای در والت یافت نشد." if is_fa else "No project note found in Vault."
+    try:
+        with open(fp, "r", encoding="utf-8", errors="replace") as f:
+            raw = f.read()
+    except Exception:
+        return ""
+
+    fm = parse_frontmatter(raw)
+    body = FM_RE.sub("", raw).strip()
+    bullets = [line.strip("- *").strip() for line in body.splitlines() if line.strip().startswith(("-", "*"))]
+    clean_bullets = [
+        b
+        for b in bullets
+        if len(b) > 10 and not any(b.startswith(pfx) for pfx in ("[[", "filters:", "properties:", "order:", "type:"))
+    ]
+
+    parts: list[str] = []
+    pillar = fm.get("pillar") or project_info.get("pillar")
+    cohort = _extract_link_stem(fm.get("cohort")) or project_info.get("cohort")
+    parent = _extract_link_stem(fm.get("parent")) or project_info.get("parent")
+
+    if is_fa:
+        if pillar:
+            parts.append(f"پیلار: {pillar}")
+        if parent:
+            parts.append(f"پروژه مادر: {parent}")
+        if cohort:
+            parts.append(f"کورس مرتبط: {cohort}")
+        if clean_bullets:
+            parts.append("فرضیات/نکات ثبت‌شده در والت: " + " | ".join(clean_bullets[:2]))
+        return "\n".join(parts) if parts else "یادداشت پروژه در والت موجود است ولی فرضیه تجاری خاصی در آن ثبت نشده است."
+    else:
+        if pillar:
+            parts.append(f"Pillar: {pillar}")
+        if parent:
+            parts.append(f"Parent: {parent}")
+        if cohort:
+            parts.append(f"Linked cohort: {cohort}")
+        if clean_bullets:
+            parts.append("Vault notes/hypotheses: " + " | ".join(clean_bullets[:2]))
+        return "\n".join(parts) if parts else "Project note exists in Vault without explicit commercial hypotheses."
+
+
 def scan_projects(vault_path: str, scorecards_rel: str = "00-Focus/Scorecards") -> list[dict]:
     projects_dir = os.path.join(vault_path, "01-Projects")
     scorecards_dir = os.path.join(vault_path, scorecards_rel.replace("/", os.sep))
@@ -405,23 +451,26 @@ def resolve_menu(
 
     sc_path = os.path.join(scorecards_dir, f"{detected}.md")
     if not os.path.exists(sc_path):
+        det_info = next((p for p in projects if p["name"] == detected), {})
+        takeaway = extract_project_takeaway(det_info, is_fa=is_fa)
         if is_fa:
             summary = (
-                f"پروژه «{detected}» شناسایی شد، ولی هنوز Scorecard ندارد.\n"
-                "گام اول: با چند سوال سریع و «آینه ویژن» تصویر کلان را می‌بندیم."
+                f"پروژه «{detected}» شناسایی شد (هنوز Scorecard ندارد).\n"
+                f"برداشت از والت: {takeaway.splitlines()[0] if takeaway else 'بدون نوت قبلی'}"
             )
-            opts = ["(Recommended) شروع ارزیابی کلان و آینه ویژن از صفر", "تغییر به پروژه دیگر"]
+            opts = ["(Recommended) بیان ویژن و شروع ارزیابی کلان", "تغییر به پروژه دیگر"]
         else:
             summary = (
                 f"Detected project '{detected}' — no Macro Scorecard yet.\n"
-                "Step 1: align on your Vision Mirror before mapping market gaps."
+                f"Vault takeaway: {takeaway.splitlines()[0] if takeaway else 'No prior notes'}"
             )
-            opts = ["(Recommended) Start Vision Mirror & full market audit", "Switch to another project"]
+            opts = ["(Recommended) State Vision & start full market audit", "Switch to another project"]
 
         return {
             "detected_project": detected,
             "state": "new",
             "workspace_mode": "single_project",
+            "project_takeaway": takeaway,
             "unregistered_subfolders": unregistered,
             "stage": "",
             "last_full_audit": None,
