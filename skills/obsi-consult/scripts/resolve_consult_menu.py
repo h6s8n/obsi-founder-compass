@@ -22,6 +22,11 @@ FM_RE = re.compile(r"^---\r?\n(.*?)\r?\n---", re.DOTALL)
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
 BUNDLE_HEAD_RE = re.compile(r"^(?:\d+\.\s+|-\s+)\*\*(.+?)\*\*")
 COHORT_READY_RE = re.compile(r"(کورس|Cohort|لایه ۲|ready_for_cohorts)", re.I)
+CLOSED_TOPIC_RE = re.compile(
+    r"(بسته شد|کامل شد|تصویب شد|ثبت شد|نهایی شد|closed|done|adopted|approved|ready for cohort)",
+    re.I,
+)
+PENDING_DECISION_STATUSES = {"draft", "proposed", "in_progress", "pending", "pending_review", "review"}
 IGNORE_WORKSPACE_DIRS = {
     ".git",
     ".github",
@@ -326,6 +331,92 @@ def extract_bundles(scorecard_txt: str) -> list[str]:
     return bundles
 
 
+def detect_pending_consultation_topic(
+    vault_path: str,
+    project_name: str,
+    scorecard_txt: str = "",
+    scorecard_fm: dict | None = None,
+) -> dict | None:
+    """
+    Detects in-flight / unfinished consultation topics for a project:
+    1. Decisions folder (00-Focus/Decisions/) for files matching project with draft/proposed/pending status.
+    2. Scorecard active_deep_dive (if not marked closed/done).
+    3. Scorecard gap table: rows with ⚠️ or ❌ and priority 1 that describe an open action.
+    """
+    if not vault_path or not project_name:
+        return None
+
+    # 1. Check 00-Focus/Decisions/ for draft/proposed decisions
+    decisions_dir = os.path.join(vault_path, "00-Focus", "Decisions")
+    if os.path.isdir(decisions_dir):
+        p_low = project_name.lower()
+        candidates: list[dict] = []
+        try:
+            for fn in sorted(os.listdir(decisions_dir)):
+                if not fn.endswith(".md"):
+                    continue
+                fp = os.path.join(decisions_dir, fn)
+                try:
+                    with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                        content = f.read()
+                except OSError:
+                    continue
+                fm = parse_frontmatter(content)
+                proj = _extract_link_stem(fm.get("project") or "")
+                title = str(fm.get("title") or "").strip()
+                status = str(fm.get("status") or "").strip().lower()
+
+                matches_project = (proj.lower() == p_low) or (p_low in fn.lower())
+                if matches_project and status in PENDING_DECISION_STATUSES:
+                    clean_title = title or re.sub(r"^\d{4}-\d{2}-\d{2}\s*-\s*", "", fn[:-3])
+                    candidates.append({
+                        "title": clean_title,
+                        "source": "decision_draft",
+                        "file": os.path.relpath(fp, vault_path).replace("\\", "/"),
+                        "status": status,
+                    })
+        except OSError:
+            pass
+
+        if candidates:
+            return candidates[-1]
+
+    # 2. Check active_deep_dive in Scorecard frontmatter
+    fm = scorecard_fm or {}
+    active_deep_dive = str(fm.get("active_deep_dive") or "").strip()
+    if active_deep_dive and not CLOSED_TOPIC_RE.search(active_deep_dive):
+        return {
+            "title": active_deep_dive,
+            "source": "scorecard_deep_dive",
+            "file": f"00-Focus/Scorecards/{project_name}.md",
+            "status": "in_progress",
+        }
+
+    # 3. Check Scorecard Macro Gap table for Priority 1 gaps with ⚠️ or ❌
+    if scorecard_txt:
+        for line in scorecard_txt.splitlines():
+            line_str = line.strip()
+            if not line_str.startswith("|") or "ستون موفقیت" in line_str or "---" in line_str:
+                continue
+            cols = [c.strip() for c in line_str.split("|")[1:-1]]
+            if len(cols) >= 5:
+                status_icon = cols[1]
+                priority = cols[4]
+                if status_icon in ("⚠️", "❌") and priority in ("1", "۱"):
+                    area_name = re.sub(r"[*`_]", "", cols[0]).strip()
+                    gap_text = re.sub(r"[*`_]", "", cols[3]).strip()
+                    if gap_text and gap_text != "—":
+                        short_gap = gap_text if len(gap_text) <= 50 else gap_text[:47] + "…"
+                        return {
+                            "title": f"{area_name} ({short_gap})",
+                            "source": "scorecard_p1_gap",
+                            "file": f"00-Focus/Scorecards/{project_name}.md",
+                            "status": "gap_action_needed",
+                        }
+
+    return None
+
+
 def resolve_menu(
     vault_path: str,
     cwd: str = "",
@@ -497,21 +588,36 @@ def resolve_menu(
 
     active_deep_dive = str(fm.get("active_deep_dive") or "")
     bundles = extract_bundles(sc_txt)
+    pending_topic = detect_pending_consultation_topic(
+        vault_path=vault_path,
+        project_name=detected,
+        scorecard_txt=sc_txt,
+        scorecard_fm=fm,
+    )
 
     if age_days is not None and age_days > stale_days:
         state = "stale"
-    elif bundles and (not active_deep_dive or COHORT_READY_RE.search(active_deep_dive)):
+    elif bundles and (not active_deep_dive or COHORT_READY_RE.search(active_deep_dive)) and not pending_topic:
         state = "ready_for_cohorts"
     else:
         state = "in_progress"
 
     if is_fa:
-        summary = (
-            f"پروژه «{detected}» — وضعیت لایه ۱ (مشاور کلان بازار):\n"
-            f"نقطه توقف: {active_deep_dive or stage or 'کارنامه آماده است'}"
-        )
+        if pending_topic:
+            summary = (
+                f"پروژه «{detected}» — وضعیت لایه ۱ (مشاور کلان بازار):\n"
+                f"⚠️ موضوع معلق در جریان: «{pending_topic['title']}» (نیازمند نهایی‌سازی و ثبت در والت)"
+            )
+            opt1 = f"(Recommended) نهایی‌سازی و ثبت رسمی موضوع در جریان: {pending_topic['title']}"
+        else:
+            summary = (
+                f"پروژه «{detected}» — وضعیت لایه ۱ (مشاور کلان بازار):\n"
+                f"نقطه توقف: {active_deep_dive or stage or 'کارنامه آماده است'}"
+            )
+            opt1 = "(Recommended) اضافه کردن بحث یا تصمیم کلان جدید"
+
         options = [
-            "(Recommended) اضافه کردن بحث یا تصمیم کلان جدید",
+            opt1,
             f"گام ۳: بررسی بسته‌های تمرکز کلان ({len(bundles)} محور فعال)",
             "گام ۲: کارنامه کلان بازار (Market Scorecard)",
             "گام ۱: بازبینی آینه ویژن و هدف پروژه (Vision Mirror)",
@@ -519,12 +625,21 @@ def resolve_menu(
             f"شروع مجدد ارزیابی کلان «{detected}» از اول",
         ]
     else:
-        summary = (
-            f"Project '{detected}' — Layer 1 (30,000-ft Market Consultant):\n"
-            f"Current status: {active_deep_dive or stage or 'Scorecard ready'}"
-        )
+        if pending_topic:
+            summary = (
+                f"Project '{detected}' — Layer 1 (30,000-ft Market Consultant):\n"
+                f"⚠️ In-flight topic pending closure: '{pending_topic['title']}'"
+            )
+            opt1 = f"(Recommended) Finalize and record in-flight topic: {pending_topic['title']}"
+        else:
+            summary = (
+                f"Project '{detected}' — Layer 1 (30,000-ft Market Consultant):\n"
+                f"Current status: {active_deep_dive or stage or 'Scorecard ready'}"
+            )
+            opt1 = "(Recommended) Add a new macro discussion or strategic decision"
+
         options = [
-            "(Recommended) Add a new macro discussion or strategic decision",
+            opt1,
             f"Step 3: Macro Focus Bundles ({len(bundles)} active)",
             "Step 2: Market Scorecard & Gaps",
             "Step 1: Vision Mirror & Goal",
@@ -541,6 +656,7 @@ def resolve_menu(
         "last_full_audit": lv_str or None,
         "age_days": age_days,
         "active_deep_dive": active_deep_dive,
+        "pending_topic": pending_topic,
         "bundles": bundles,
         "scorecard_path": sc_path,
         "projects": [{"name": p["name"], "has_scorecard": p["has_scorecard"]} for p in projects],

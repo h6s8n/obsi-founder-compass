@@ -380,6 +380,112 @@ class TestConsultWorkflowAndCache(unittest.TestCase):
             pc.save_playbook(tmp, "bakery-local", "Local Bakery", ["bakery", "storefront", "local"], va._read_text(body_f), ["https://example.com"])
             self.assertEqual(pc.find_cached_playbook(tmp, "Local artisan bakery storefront", 90)["status"], "HIT")
 
+    def test_in_flight_consult_topic_detection_and_dynamic_option_closure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            vault_dir = os.path.join(tmp, "brain_in_flight")
+            app_dir = os.path.join(tmp, "app_dir")
+            os.makedirs(app_dir, exist_ok=True)
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    SETUP_SCRIPT,
+                    "--vault",
+                    vault_dir,
+                    "--lang",
+                    "fa",
+                    "--add-project",
+                    f"TestApp|{app_dir}|Projects",
+                    "--apply",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+
+            sc_dir = os.path.join(vault_dir, "00-Focus", "Scorecards")
+            os.makedirs(sc_dir, exist_ok=True)
+            sc_file = os.path.join(sc_dir, "TestApp.md")
+            with open(sc_file, "w", encoding="utf-8") as f:
+                f.write(
+                    "---\n"
+                    "type: scorecard\n"
+                    "last_full_audit: 2026-11-21\n"
+                    "active_deep_dive: \"فاز ۱ بسته شد — توافق ثبت شد\"\n"
+                    "---\n"
+                    "## 🎯 محورهای کلان انتخابی\n"
+                    "1. **محور ۱ — تست اولیه**\n"
+                )
+
+            # 1. When all topics are closed, Option 1 is standard
+            menu1 = rcm.resolve_menu(vault_dir, cwd=app_dir, lang="fa")
+            self.assertIsNone(menu1.get("pending_topic"))
+            self.assertIn("اضافه کردن بحث یا تصمیم کلان جدید", menu1["recommended_options"][0])
+
+            # 2. When a draft decision exists in 00-Focus/Decisions/
+            decisions_dir = os.path.join(vault_dir, "00-Focus", "Decisions")
+            os.makedirs(decisions_dir, exist_ok=True)
+            draft_decision_file = os.path.join(decisions_dir, "2026-11-21 - TestApp Partner RevShare Agreement.md")
+            with open(draft_decision_file, "w", encoding="utf-8") as f:
+                f.write(
+                    "---\n"
+                    "type: decision\n"
+                    "project: \"[[TestApp]]\"\n"
+                    "title: \"قرارداد شراکت نریشن و تقسیم سود\"\n"
+                    "status: draft\n"
+                    "---\n"
+                    "# صورت‌جلسه پیش‌نویس\n"
+                )
+
+            menu2 = rcm.resolve_menu(vault_dir, cwd=app_dir, lang="fa")
+            self.assertIsNotNone(menu2.get("pending_topic"))
+            self.assertEqual(menu2["pending_topic"]["title"], "قرارداد شراکت نریشن و تقسیم سود")
+            self.assertEqual(menu2["pending_topic"]["source"], "decision_draft")
+            self.assertIn("نهایی‌سازی و ثبت رسمی موضوع در جریان", menu2["recommended_options"][0])
+            self.assertIn("قرارداد شراکت نریشن و تقسیم سود", menu2["recommended_options"][0])
+            self.assertIn("موضوع معلق در جریان", menu2["summary_2lines"])
+
+            # Verify English translation
+            menu2_en = rcm.resolve_menu(vault_dir, cwd=app_dir, lang="en")
+            self.assertIn("Finalize and record in-flight topic", menu2_en["recommended_options"][0])
+            self.assertIn("In-flight topic pending closure", menu2_en["summary_2lines"])
+
+            # 3. Simulate closure by updating status to Approved
+            with open(draft_decision_file, "w", encoding="utf-8") as f:
+                f.write(
+                    "---\n"
+                    "type: decision\n"
+                    "project: \"[[TestApp]]\"\n"
+                    "title: \"قرارداد شراکت نریشن و تقسیم سود\"\n"
+                    "status: Approved\n"
+                    "---\n"
+                    "# صورت‌جلسه مصوب\n"
+                )
+
+            menu3 = rcm.resolve_menu(vault_dir, cwd=app_dir, lang="fa")
+            self.assertIsNone(menu3.get("pending_topic"))
+            self.assertIn("اضافه کردن بحث یا تصمیم کلان جدید", menu3["recommended_options"][0])
+
+            # 4. Open active_deep_dive in Scorecard without draft file
+            with open(sc_file, "w", encoding="utf-8") as f:
+                f.write(
+                    "---\n"
+                    "type: scorecard\n"
+                    "last_full_audit: 2026-11-21\n"
+                    "active_deep_dive: \"بررسی استراتژی قیمت‌گذاری B2B\"\n"
+                    "---\n"
+                    "## 🎯 محورهای کلان انتخابی\n"
+                    "1. **محور ۱ — تست اولیه**\n"
+                )
+
+            menu4 = rcm.resolve_menu(vault_dir, cwd=app_dir, lang="fa")
+            self.assertIsNotNone(menu4.get("pending_topic"))
+            self.assertEqual(menu4["pending_topic"]["source"], "scorecard_deep_dive")
+            self.assertEqual(menu4["pending_topic"]["title"], "بررسی استراتژی قیمت‌گذاری B2B")
+            self.assertIn("بررسی استراتژی قیمت‌گذاری B2B", menu4["recommended_options"][0])
+
 
 class TestInspectorTranscriptExtractor(unittest.TestCase):
     def test_truncation_recovery_markers_delta_and_last_n(self):
