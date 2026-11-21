@@ -52,7 +52,7 @@ agy plugin install .
 
 | Command | What happens when you type it |
 | :--- | :--- |
-| **`/obsi`** | Detects your current workspace project (or offers 1-click linking if new) and opens the clickable 5-layer hub menu. |
+| **`/obsi`** | Detects your current project, shows its top active tasks (up to 5 one-liners), and opens the 5-layer menu. |
 | **`/obsi-setup`** | Asks 4 quick clickable questions, previews changes with `--dry-run`, and scaffolds your Obsidian Vault (or adds a new project). |
 | **`/obsi-consult`** | Mirrors your product vision in 4 plain lines, checks cached 90-day playbooks, and finds market/buyer gaps without touching code. |
 | **`/obsi-priority`** | Turns approved strategy bundles into 14-day `Scale / Pivot / Kill` experiments and atomic tasks with optional Light/Medium/Deep pacing. |
@@ -69,8 +69,8 @@ It enforces a strict **No-Code Firewall**: your built product is summarized in o
 **Will it lecture me to kill projects or manage my calendar?**
 No. **Layer 1** (`/obsi-consult`) evaluates each project strictly on its own market merits (**No Capacity Policing**). Only in **Layer 2** (`/obsi-priority`) do you see neutral pacing options alongside 14-day Cohorts — you always choose.
 
-**Does it interrupt regular coding chats or send my notes anywhere?**
-No. All strategy and audit rules stay completely dormant until you type an `/obsi*` command. Everything lives locally as plain Markdown under Git.
+**Does it interrupt regular coding chats or update Obsidian automatically?**
+No interruptions — all strategy and audit rules stay completely dormant until you type an `/obsi*` command. Every confirmed write updates the exact local Markdown files inside your Vault, so **Obsidian boards (`.base`) update live automatically**.
 
 ---
 

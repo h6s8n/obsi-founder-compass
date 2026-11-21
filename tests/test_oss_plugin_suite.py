@@ -163,11 +163,33 @@ class TestEndToEndScaffoldingAndRouting(unittest.TestCase):
                 self.assertEqual(proc2.returncode, 0, proc2.stderr)
                 self.assertEqual(va.run_audit(vault_dir, SKILLS_DIR)["errors"], [])
 
+                # Add sample tasks for AcmeSaaS to verify one-line Hub task preview
+                tasks_dir = os.path.join(vault_dir, "02-Tasks", "Projects", "AcmeSaaS")
+                os.makedirs(tasks_dir, exist_ok=True)
+                sample_tasks = {
+                    "AcmeSaaS - Ship Landing.md": "status: Doing\ntoday: true\nday: Sun\npriority: High\naction: Publish landing page\n",
+                    "AcmeSaaS - Call Leads.md": "status: Sprint\ntoday: false\nday: \"\"\npriority: Medium\naction: Reach out to 5 beta leads\n",
+                    "AcmeSaaS - Launch Ads.md": "status: Locked\ntoday: false\nday: \"\"\ndepends_on: \"[[AcmeSaaS - Ship Landing]]\"\npriority: Low\naction: Start paid campaign\n",
+                    "AcmeSaaS - Setup Repo.md": "status: Done\ntoday: false\nday: \"\"\npriority: High\naction: Initialize codebase\n",
+                }
+                for fname, extra_yaml in sample_tasks.items():
+                    with open(os.path.join(tasks_dir, fname), "w", encoding="utf-8") as f:
+                        f.write(f"---\ntype: task\npillar: Projects\ncadence: finite\nproject: \"[[AcmeSaaS]]\"\n{extra_yaml}created: 2026-11-21\n---\n")
+
                 # Hub checks
                 hub_ready = roh.resolve_hub(cwd=app1, config_path=cfg_path)
                 self.assertEqual(hub_ready["state"], "ready")
                 self.assertEqual(hub_ready["detected_project"], "AcmeSaaS")
                 self.assertEqual(len(hub_ready["recommended_options"]), 5)
+                self.assertEqual(hub_ready["project_tasks"]["active_total"], 2)
+                self.assertEqual(hub_ready["project_tasks"]["locked_count"], 1)
+                self.assertEqual(hub_ready["project_tasks"]["items"][0]["badge"], "🔥")
+                self.assertEqual(hub_ready["project_tasks"]["items"][1]["badge"], "⚡")
+                card = hub_ready["project_tasks_card"]
+                self.assertIn("Ship Landing", card)
+                self.assertIn("Call Leads", card)
+                self.assertIn("1", card)
+                self.assertNotIn("Setup Repo", card)
 
                 hub_missing = roh.resolve_hub(cwd=app1, config_path=os.path.join(tmp, "none.json"))
                 self.assertEqual(hub_missing["state"], "needs_setup")

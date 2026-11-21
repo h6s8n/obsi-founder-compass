@@ -17,6 +17,8 @@ if hasattr(sys.stdout, "reconfigure"):
 
 DEFAULT_CONFIG_PATH = os.path.expanduser(os.path.join("~", ".gemini", "config", "brain-os.json"))
 FM_RE = re.compile(r"^---\r?\n(.*?)\r?\n---", re.DOTALL)
+WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
+PRIORITY_RANK = {"high": 0, "medium": 1, "low": 2}
 
 
 def load_config(config_path: str | None = None) -> tuple[dict, bool]:
@@ -121,7 +123,130 @@ def count_vault_stats(vault_path: str) -> dict:
     }
 
 
-def resolve_hub(cwd: str = "", config_path: str | None = None, vault_override: str = "") -> dict:
+def collect_project_tasks(vault_path: str, project_name: str, lang: str = "en", limit: int = 5) -> tuple[dict, str]:
+    tasks_dir = os.path.join(vault_path, "02-Tasks")
+    active_rows: list[tuple[tuple[int, int, str], dict]] = []
+    locked_count = 0
+    backlog_count = 0
+    target_low = project_name.strip().lower()
+
+    if os.path.isdir(tasks_dir) and target_low:
+        for root, _, files in os.walk(tasks_dir):
+            for fn in sorted(files):
+                if not fn.endswith(".md"):
+                    continue
+                fp = os.path.join(root, fn)
+                with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                    fm = parse_frontmatter(f.read())
+                if fm.get("type") and str(fm.get("type")).lower() != "task":
+                    continue
+
+                proj_raw = str(fm.get("project") or "").strip()
+                m = WIKILINK_RE.search(proj_raw)
+                proj_stem = m.group(1).strip() if m else proj_raw
+                rel_parts = os.path.relpath(fp, tasks_dir).replace("\\", "/").split("/")
+                matched = (
+                    proj_stem.lower() == target_low
+                    if proj_stem
+                    else any(part.lower() == target_low for part in rel_parts[:-1])
+                )
+                if not matched:
+                    continue
+
+                status = str(fm.get("status") or "").strip()
+                if status.lower() == "done":
+                    continue
+
+                today_flag = fm.get("today") is True
+                priority = str(fm.get("priority") or "").strip()
+                action = " ".join(str(fm.get("action") or "").split())
+                clean_title = os.path.splitext(fn)[0]
+                for sep in (" - ", " — ", "- ", ": "):
+                    pref = f"{project_name}{sep}"
+                    if clean_title.lower().startswith(pref.lower()) and len(clean_title) > len(pref):
+                        clean_title = clean_title[len(pref):].strip()
+                        break
+
+                if status == "Locked":
+                    locked_count += 1
+                elif status in ("Sprint", "Doing") or today_flag:
+                    is_hot = today_flag or status == "Doing"
+                    badge = "🔥" if is_hot else "⚡"
+                    short_action = (action[:69].rstrip() + "…") if len(action) > 72 else action
+                    sort_key = (0 if is_hot else 1, PRIORITY_RANK.get(priority.lower(), 3), clean_title.lower())
+                    active_rows.append(
+                        (
+                            sort_key,
+                            {
+                                "badge": badge,
+                                "title": clean_title,
+                                "action": short_action,
+                                "status": status or "Backlog",
+                                "priority": priority,
+                                "today": today_flag,
+                                "path": fp,
+                            },
+                        )
+                    )
+                else:
+                    backlog_count += 1
+
+    active_rows.sort(key=lambda pair: pair[0])
+    active_total = len(active_rows)
+    shown_items = [pair[1] for pair in active_rows[: max(0, limit)]]
+    more_active = max(0, active_total - len(shown_items))
+
+    if lang == "fa":
+        header = (
+            f"📌 تسک‌های فعال «{project_name}» ({active_total} باز):"
+            if active_total > 0
+            else f"📌 تسک فعالی برای «{project_name}» باز نیست."
+        )
+    else:
+        header = (
+            f"📌 Active tasks for {project_name} ({active_total} open):"
+            if active_total > 0
+            else f"📌 No active tasks open for {project_name}."
+        )
+
+    lines = [header]
+    for item in shown_items:
+        line = f"• {item['badge']} {item['title']}"
+        if item["action"]:
+            line += f" — {item['action']}"
+        lines.append(line)
+
+    footer_parts: list[str] = []
+    if lang == "fa":
+        if more_active:
+            footer_parts.append(f"➕ {more_active} فعال دیگر")
+        if locked_count:
+            footer_parts.append(f"🔒 {locked_count} قفل")
+        if backlog_count:
+            footer_parts.append(f"📋 {backlog_count} بک‌لاگ")
+    else:
+        if more_active:
+            footer_parts.append(f"+{more_active} more active")
+        if locked_count:
+            footer_parts.append(f"🔒 {locked_count} locked")
+        if backlog_count:
+            footer_parts.append(f"📋 {backlog_count} backlog")
+    if footer_parts:
+        lines.append(" · ".join(footer_parts))
+
+    summary = {
+        "project": project_name,
+        "active_total": active_total,
+        "shown_count": len(shown_items),
+        "more_active": more_active,
+        "locked_count": locked_count,
+        "backlog_count": backlog_count,
+        "items": shown_items,
+    }
+    return summary, "\n".join(lines)
+
+
+def resolve_hub(cwd: str = "", config_path: str | None = None, vault_override: str = "", max_tasks: int = 5) -> dict:
     cfg, cfg_exists = load_config(config_path)
     vault_path = vault_override or str(cfg.get("vault_path") or "")
     lang = str(cfg.get("language") or "en").lower()
@@ -139,6 +264,8 @@ def resolve_hub(cwd: str = "", config_path: str | None = None, vault_override: s
             "vault_path": vault_path or None,
             "detected_project": None,
             "stats": {},
+            "project_tasks": None,
+            "project_tasks_card": "",
             "summary_2lines": summary,
             "recommended_options": opts,
         }
@@ -146,6 +273,13 @@ def resolve_hub(cwd: str = "", config_path: str | None = None, vault_override: s
     detected, proj_count = detect_project(vault_path, cwd)
     stats = count_vault_stats(vault_path)
     stats["projects_count"] = proj_count
+
+    project_tasks = None
+    project_tasks_card = ""
+    if detected:
+        project_tasks, project_tasks_card = collect_project_tasks(
+            vault_path, detected, lang=lang, limit=max_tasks
+        )
 
     if lang == "fa":
         proj_label = f"پروژه فعال: «{detected}»" if detected else f"{proj_count} پروژه در ابسیدین"
@@ -179,6 +313,8 @@ def resolve_hub(cwd: str = "", config_path: str | None = None, vault_override: s
         "vault_path": vault_path,
         "detected_project": detected,
         "stats": stats,
+        "project_tasks": project_tasks,
+        "project_tasks_card": project_tasks_card,
         "summary_2lines": summary,
         "recommended_options": options,
     }
@@ -189,14 +325,19 @@ def main() -> None:
     parser.add_argument("--cwd", default=os.getcwd(), help="Current workspace path")
     parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help="Path to brain-os.json")
     parser.add_argument("--vault", default="", help="Optional Vault path override")
+    parser.add_argument("--max-tasks", type=int, default=5, help="Max active tasks shown per project")
     parser.add_argument("--json", action="store_true", help="Output JSON")
     args = parser.parse_args()
 
-    res = resolve_hub(cwd=args.cwd, config_path=args.config, vault_override=args.vault)
+    res = resolve_hub(cwd=args.cwd, config_path=args.config, vault_override=args.vault, max_tasks=args.max_tasks)
     if args.json:
         print(json.dumps(res, ensure_ascii=False, indent=2))
     else:
         print(res["summary_2lines"])
+        if res.get("project_tasks_card"):
+            print()
+            print(res["project_tasks_card"])
+        print()
         for i, opt in enumerate(res["recommended_options"], 1):
             print(f"  {i}. {opt}")
 
