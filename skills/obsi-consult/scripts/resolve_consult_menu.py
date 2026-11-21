@@ -517,6 +517,7 @@ def resolve_menu(
             options = ["(Recommended) ادامه مستقیم از آخرین نقطه توقف"]
         for idx, b in enumerate(bundles, 1):
             options.append(f"عمیق‌شدن روی محور {idx}: {b}")
+        options.append("💡 طرح یک موضوع، قرارداد یا تصمیم جدید برای مشورت و طوفان فکری")
         options.append(f"شروع مجدد ارزیابی کلان «{detected}» از اول")
         options.append("تغییر به پروژه دیگر")
     else:
@@ -531,6 +532,7 @@ def resolve_menu(
             options = ["(Recommended) Resume directly from current stop point"]
         for idx, b in enumerate(bundles, 1):
             options.append(f"Deep-dive Bundle {idx}: {b}")
+        options.append("💡 Consult / brainstorm on a specific topic, deal, or new decision")
         options.append(f"Restart full market audit for '{detected}'")
         options.append("Switch to another project")
 

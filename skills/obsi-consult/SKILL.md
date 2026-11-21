@@ -27,6 +27,7 @@ Show `summary_2lines` and invoke **`ask_question`** with `recommended_options` (
    - **Macro Alignment:** Lock Vision -> Scorecard -> Macro Focus Bundles in Layer 1 BEFORE transitioning to Layer 2 (`/obsi-priority`).
 2. **Route B (`Resume`):** Read ONLY `Scorecards/<Project>.md` (0 searches), state stop point in 2 lines, continue.
 3. **Route C (`Deep-Dive`):** Read Scorecard + cached Playbook (`mode="deep_dive"`), update only that row after approval.
+4. **Route D (`Ad-hoc Deal / Topic Consult & Decision Gate`):** On specific deal/idea or picking `💡 Consult / brainstorm`: grill blind spots/risks. **Proactively** draft summary and ask to save `00-Focus/Decisions/YYYY-MM-DD - <Topic>.md` + action task in `02-Tasks/`.
 
 ## Groundedness & Auto-Guided Proposal-First Flow
 Follow `governance_and_audit.md` (§0–§3, §6–§7): `Scorecard/Playbooks -> search_web -> Ask User (max 3) -> Silence`. End EVERY stage with a ready draft proposal (`Vision -> Scorecard -> Macro Focus Bundles -> /obsi-priority -> Tasks`).
