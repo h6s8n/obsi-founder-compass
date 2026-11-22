@@ -424,11 +424,61 @@ def resolve_menu(
     scorecards_rel: str = "00-Focus/Scorecards",
     stale_days: int = 30,
     lang: str = "en",
+    pick_first: bool = False,
 ) -> dict:
     is_fa = str(lang).lower() == "fa"
     projects = scan_projects(vault_path, scorecards_rel=scorecards_rel)
     scorecards_dir = os.path.join(vault_path, scorecards_rel.replace("/", os.sep))
     unregistered = discover_unregistered_subfolders(cwd, projects)
+
+    if pick_first and not explicit_project.strip():
+        _, cwd_matched, umbrella_cwd = detect_workspace_projects(projects, cwd)
+        cwd_low = {p["name"].lower() for p in cwd_matched}
+        ordered = sorted(projects, key=lambda p: (0 if p["name"].lower() in cwd_low else 1, p["name"].lower()))
+        if is_fa:
+            proj_opts = []
+            for p in ordered:
+                tags = []
+                if p["name"].lower() in cwd_low:
+                    tags.append("پروژه فعلی")
+                tags.append("دارای کارنامه" if p["has_scorecard"] else "جدید")
+                proj_opts.append(f"{p['name']} ({' · '.join(tags)})")
+            proj_opts.append("موضوع آزاد (بدون پروژه)")
+            proj_opts.append("تعریف پروژه جدید")
+            summary = (
+                "کدام پروژه یا موضوع را برای مشاوره انتخاب می‌کنی؟\n"
+                "انتخاب کن تا حرفت را بشنوم و از همه ابعاد بررسی کنم."
+            )
+        else:
+            proj_opts = []
+            for p in ordered:
+                tags = []
+                if p["name"].lower() in cwd_low:
+                    tags.append("current")
+                tags.append("has Scorecard" if p["has_scorecard"] else "new")
+                proj_opts.append(f"{p['name']} ({' · '.join(tags)})")
+            proj_opts.append("General Topic (no specific project)")
+            proj_opts.append("New project")
+            summary = (
+                "Which project or topic would you like to consult on?\n"
+                "Pick one, then share what's on your mind for a full multi-angle review."
+            )
+        return {
+            "detected_project": None,
+            "state": "pick_project",
+            "workspace_mode": "pick_first",
+            "umbrella_project": umbrella_cwd,
+            "workspace_projects": [],
+            "unregistered_subfolders": unregistered,
+            "stage": "",
+            "last_full_audit": None,
+            "age_days": None,
+            "active_deep_dive": "",
+            "bundles": [],
+            "projects": [{"name": p["name"], "has_scorecard": p["has_scorecard"]} for p in ordered],
+            "summary_2lines": summary,
+            "recommended_options": proj_opts,
+        }
 
     detected: str | None = None
     matched: list[dict] = []
@@ -550,18 +600,21 @@ def resolve_menu(
                 f"برداشت از والت: {takeaway.splitlines()[0] if takeaway else 'بدون نوت قبلی'}"
             )
             opts = ["(Recommended) گام ۱: بیان ویژن و هدف پروژه (Vision Intake)", "تغییر به پروژه دیگر"]
+            user_prompt = f"پروژه «{detected}» انتخاب شد. حرفت، ایده‌ات یا چالش این پروژه چیه؟ راحت بگو تا از همه ابعاد بررسیش کنم."
         else:
             summary = (
                 f"Detected project '{detected}' — no Macro Scorecard yet.\n"
                 f"Vault takeaway: {takeaway.splitlines()[0] if takeaway else 'No prior notes'}"
             )
             opts = ["(Recommended) Step 1: Vision Intake & Mirror", "Switch to another project"]
+            user_prompt = f"Project '{detected}' selected. What's on your mind? Share your topic, idea, or challenge and I'll analyze it from all angles."
 
         return {
             "detected_project": detected,
             "state": "new",
             "workspace_mode": "single_project",
             "project_takeaway": takeaway,
+            "user_prompt": user_prompt,
             "unregistered_subfolders": unregistered,
             "stage": "",
             "last_full_audit": None,
@@ -647,10 +700,24 @@ def resolve_menu(
             f"Restart full market audit for '{detected}'",
         ]
 
+    if is_fa:
+        user_prompt = (
+            f"پروژه «{detected}» انتخاب شد (موضوع باز قبلی: «{pending_topic['title']}»). حرفت یا موضوعت چیه؟ راحت بگو تا از همه ابعاد بررسیش کنم."
+            if pending_topic
+            else f"پروژه «{detected}» انتخاب شد. حرفت، ایده‌ات یا چالش این پروژه چیه؟ راحت بگو تا از همه ابعاد بررسیش کنم."
+        )
+    else:
+        user_prompt = (
+            f"Project '{detected}' selected (open topic: '{pending_topic['title']}'). What's on your mind? Share your topic and I'll analyze it from all angles."
+            if pending_topic
+            else f"Project '{detected}' selected. What's on your mind? Share your topic, idea, or challenge and I'll analyze it from all angles."
+        )
+
     return {
         "detected_project": detected,
         "state": state,
         "workspace_mode": "single_project",
+        "user_prompt": user_prompt,
         "unregistered_subfolders": unregistered,
         "stage": stage,
         "last_full_audit": lv_str or None,
@@ -673,6 +740,7 @@ def main() -> None:
     parser.add_argument("--vault", default="", help="Override Vault path")
     parser.add_argument("--lang", default="", help="Override language ('en' or 'fa')")
     parser.add_argument("--stale-days", type=int, default=30, help="Days before Scorecard counts stale")
+    parser.add_argument("--pick-first", action="store_true", help="List all Vault projects first so user selects a project before speaking")
     parser.add_argument("--json", action="store_true", help="Output JSON")
     args = parser.parse_args()
 
@@ -686,6 +754,7 @@ def main() -> None:
         scorecards_rel=cfg.get("scorecards_dir", "00-Focus/Scorecards"),
         stale_days=args.stale_days,
         lang=lang,
+        pick_first=args.pick_first,
     )
     if args.json:
         print(json.dumps(res, ensure_ascii=False, indent=2))

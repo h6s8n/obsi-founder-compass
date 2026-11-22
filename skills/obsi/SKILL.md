@@ -3,31 +3,40 @@ name: obsi
 kind: workflow
 uses:
   - second-brain
-description: "[Workflow] 5-Layer Obsidian Brain Hub & Layer 3 Daily Execution (`/obsi`, `obsi`): smart 5-layer command palette via `ask_question`, rapid capture, weekly scheduling, next unlocked task, and `/obsi done` cascading unlock. Silent in normal chat."
+description: "[Workflow] 5-Layer Obsidian Brain Hub & Layer 3 Daily Execution (`/obsi`, `obsi`): smart command palette via `ask_question`, rapid capture, weekly scheduling, next unlocked task, and `/obsi done` cascading unlock. Silent in normal chat."
 ---
 
-# `obsi` — 5-Layer Hub & Layer 3 Execution
+# `obsi` — Hub & Daily Execution
 
-Trigger on **`obsi`**, **`/obsi`**, or quick capture/tactical requests. Read `~/.gemini/config/brain-os.json` to locate the user's Vault, follow `second-brain` schemas, and confirm in 1 line before mutating any Vault file.
+Trigger on **`obsi`**, **`/obsi`**, or quick capture/tactical requests. Locate `<Vault>` via `~/.gemini/config/brain-os.json`, follow `second-brain` schemas, and confirm in 1 line before mutating Vault notes.
 
-## Thin Hub Entry Gate (`resolve_obsi_hub.py`)
+## Entry Gate (`resolve_obsi_hub.py`)
 On `/obsi` (bare or naming a project/alias), run [resolve_obsi_hub.py](../second-brain/scripts/resolve_obsi_hub.py):
 `python "<second-brain-dir>/scripts/resolve_obsi_hub.py" --cwd "<workspace>" [--project "<name-or-alias>"] --json`
-Display `summary_2lines` and (if non-empty) `project_tasks_card`, then call **`ask_question`** with `recommended_options`:
-- **`needs_setup`** -> launch Layer 0 (`obsi-setup`).
-- **`pick_project`** *(monorepo / multi-project workspace)* -> let the user pick a registered sub-project (re-run with `--project` or route to chosen layer) OR choose the option to register an unregistered subfolder via `/obsi-setup` (`obsi-setup` §3).
-- **`ready`** -> let the user pick any of the 5 layers in 1 click:
-  - **Layer 0 (`obsi-setup`)** · **Layer 1 (`obsi-consult`)** · **Layer 2 (`obsi-priority`)** · **Layer 3 (`obsi` daily)** · **Layer 4 (`obsi-inspect`)**.
+Show `summary_2lines` + `project_tasks_card`, then call `ask_question` with `recommended_options`:
+- **`needs_setup`** -> auto-launch `obsi-setup`.
+- **`ready`** *(single project, multi-project workspace, or any folder)* -> always present ONLY the 5 crisp 1–2 word architecture choices via `ask_question` (`Setup` stays out of daily menu):
+  - **`Raw Idea` / `ایده خام`**: show `Ideas-Parking.base` (`query_base`) + ask idea -> `Ideas-Parking`, `Feasibility`, or `01-Projects`.
+  - **`Consult` / `مشاوره`**: launch `obsi-consult` with `--pick-first` (list projects + free topic -> pick -> ask user to speak -> all-angle review).
+  - **`Priority Plan` / `اولویت‌بندی`**: launch `obsi-priority`.
+  - **`Daily Tasks` / `کارهای امروز`**: show tasks via MCP `list_tasks` / `query_base` + Next / Capture / Week / Done.
+  - **`Audit` / `بازرسی`**: launch `obsi-inspect` (Chat Audit or Vault Audit).
 
-## Layer 3 Direct Shortcuts (Daily Execution)
-| Shortcut | Action | Destination / Ref |
+## Native MCP Fast-Path
+Use bundled `obsi` MCP tools directly (fallback: `resolve_obsi_hub.py`) — zero ad-hoc scripts/hardcoding:
+- **`list_tasks` / `get_vault_overview`**: Instant cross-project/filtered tasks ranked by `Tasks.base`.
+- **`list_bases` / `query_base`**: Dynamically parse and query any Vault `*.base` view.
+- **`update_task`**: Confirm in 1 line first, then update fields and auto-unlock `depends_on` tasks on `Done`.
+
+## Daily Shortcuts
+| Shortcut | Action | Ref |
 | :--- | :--- | :--- |
-| **`obsi <text>`** *(capture)* | Detect layer (Cohort, Project, Rock, Task, Idea), draft YAML, confirm in 1 line, write cleanly. | `second-brain` |
-| **`/obsi next`** | Surface the single highest-priority unlocked active task ready now. | `Today.base` / `Tasks.base` |
-| **`/obsi tactical`** | Plan weekly day slots with concrete half-line `action:` (`Mon–Sun` or `Sat–Fri`). | `Weekly.base` |
-| **`/obsi log [task]`** | Log partial progress (`status: Doing`, refresh `action:`, append dated progress note without closing prematurely). | `02-Tasks/` |
-| **`/obsi done [task]`** | Set `status: Done`, `today: false`, `completed: YYYY-MM-DD`; unlock matched `depends_on` tasks (`Locked` -> `Sprint`). | `02-Tasks/` |
+| **`obsi <text>`** | Detect layer (Cohort, Project, Task, Idea), draft YAML, confirm, write cleanly. | `second-brain` |
+| **`/obsi next`** | Surface highest-priority unlocked active task ready now. | `Today.base` |
+| **`/obsi tactical`** | Plan weekly day slots with half-line `action:` (`Mon–Sun` / `Sat–Fri`). | `Weekly.base` |
+| **`/obsi log [task]`** | Log partial progress (`status: Doing`, refresh `action:`) without closing. | `02-Tasks/` |
+| **`/obsi done [task]`** | Set `status: Done`, `today: false`, `completed`; unlock `depends_on` (`Locked`->`Sprint`). | `02-Tasks/` |
 
 ## Execution Rule
 1. Propose target layer, 1-line summary, and key YAML fields; wait for user confirmation before writing.
-2. Enforce SSOT (never duplicate `.base` views or Cohort logs) and reply with clickable `file:///` links.
+2. Enforce SSOT (no duplicate `.base`/Cohort logs) and reply with `file:///` links.

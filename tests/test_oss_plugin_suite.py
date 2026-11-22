@@ -29,6 +29,10 @@ sys.path.insert(0, os.path.join(SKILLS_DIR, "obsi-consult", "scripts"))
 import playbook_cache as pc  # noqa: E402
 import resolve_consult_menu as rcm  # noqa: E402
 
+sys.path.insert(0, os.path.join(REPO_ROOT, "mcp_server"))
+import server as mcp_srv  # noqa: E402
+import vault_engine as ve  # noqa: E402
+
 SETUP_SCRIPT = os.path.join(SKILLS_DIR, "obsi-setup", "scripts", "scaffold_brain.py")
 CONSULT_SCRIPT = os.path.join(SKILLS_DIR, "obsi-consult", "scripts", "consult_audit.py")
 
@@ -180,9 +184,17 @@ class TestEndToEndScaffoldingAndRouting(unittest.TestCase):
                 hub_ready = roh.resolve_hub(cwd=app1, config_path=cfg_path)
                 self.assertEqual(hub_ready["state"], "ready")
                 self.assertEqual(hub_ready["detected_project"], "AcmeSaaS")
-                self.assertEqual(len(hub_ready["recommended_options"]), 5)
-                self.assertTrue(any(k in hub_ready["recommended_options"][0] for k in ("Layer 3", "لایه ۳")))
-                self.assertTrue(any(k in hub_ready["recommended_options"][0] for k in ("active", "تسک باز", "فعال")))
+                expected_opts = (
+                    ["ایده خام", "مشاوره", "اولویت‌بندی", "کارهای امروز", "بازرسی"]
+                    if lang == "fa"
+                    else ["Raw Idea", "Consult", "Priority Plan", "Daily Tasks", "Audit"]
+                )
+                self.assertEqual(hub_ready["recommended_options"], expected_opts)
+                for opt in hub_ready["recommended_options"]:
+                    self.assertNotIn("Setup", opt)
+                    self.assertNotIn("راه‌اندازی", opt)
+                    self.assertNotIn("Layer", opt)
+                    self.assertNotIn("لایه", opt)
                 self.assertEqual(hub_ready["project_tasks"]["active_total"], 2)
                 self.assertEqual(hub_ready["project_tasks"]["locked_count"], 1)
                 self.assertEqual(hub_ready["project_tasks"]["items"][0]["badge"], "🔥")
@@ -200,6 +212,17 @@ class TestEndToEndScaffoldingAndRouting(unittest.TestCase):
                 self.assertEqual(hub_missing["state"], "needs_setup")
 
                 # Consult menu states
+                pick_all = rcm.resolve_menu(vault_dir, cwd=app1, lang=lang, pick_first=True)
+                self.assertEqual(pick_all["state"], "pick_project")
+                self.assertEqual([p["name"] for p in pick_all["projects"]], ["AcmeSaaS", "CreatorTool"])
+                self.assertTrue(pick_all["recommended_options"][0].startswith("AcmeSaaS"))
+                free_opt = "موضوع آزاد (بدون پروژه)" if lang == "fa" else "General Topic (no specific project)"
+                self.assertIn(free_opt, pick_all["recommended_options"])
+
+                picked_creator = rcm.resolve_menu(vault_dir, cwd=app1, explicit_project="CreatorTool", lang=lang)
+                self.assertEqual(picked_creator["state"], "new")
+                self.assertTrue(str(picked_creator.get("user_prompt") or "").strip())
+
                 self.assertEqual(rcm.resolve_menu(vault_dir, cwd=app1, lang=lang)["state"], "new")
                 self.assertEqual(rcm.resolve_menu(vault_dir, cwd=r"C:\other\unmatched", lang=lang)["state"], "pick_project")
 
@@ -281,7 +304,8 @@ class TestEndToEndScaffoldingAndRouting(unittest.TestCase):
                 self.assertEqual(p_add.returncode, 0, p_add.stderr)
 
             hub_mono = roh.resolve_hub(cwd=monorepo, config_path=cfg_path)
-            self.assertEqual(hub_mono["state"], "pick_project")
+            self.assertEqual(hub_mono["state"], "ready")
+            self.assertEqual(hub_mono["recommended_options"], ["Raw Idea", "Consult", "Priority Plan", "Daily Tasks", "Audit"])
             self.assertEqual(hub_mono["workspace_mode"], "multi_project")
             self.assertEqual(hub_mono["umbrella_project"], "Studio")
             ws_names = {p["name"] for p in hub_mono["workspace_projects"]}
@@ -424,6 +448,7 @@ class TestConsultWorkflowAndCache(unittest.TestCase):
             menu1 = rcm.resolve_menu(vault_dir, cwd=app_dir, lang="fa")
             self.assertIsNone(menu1.get("pending_topic"))
             self.assertIn("اضافه کردن بحث یا تصمیم کلان جدید", menu1["recommended_options"][0])
+            self.assertIn("حرفت", menu1.get("user_prompt") or "")
 
             # 2. When a draft decision exists in 00-Focus/Decisions/
             decisions_dir = os.path.join(vault_dir, "00-Focus", "Decisions")
@@ -524,6 +549,262 @@ class TestInspectorTranscriptExtractor(unittest.TestCase):
             self.assertIn("Full recovered executive summary", full_slice)
             self.assertIn("query=B2B SaaS onboarding benchmarks", full_slice)
             self.assertIn("[Step 3 RESULT]: Activation median is 30-36%", full_slice)
+
+
+class TestObsiMcpServerAndBaseEngine(unittest.TestCase):
+    def test_mcp_config_manifest_and_vault_engine_base_driven_zero_hardcode(self):
+        mcp_cfg_path = os.path.join(REPO_ROOT, "mcp_config.json")
+        self.assertTrue(os.path.exists(mcp_cfg_path), "mcp_config.json must exist")
+        cfg = json.loads(va._read_text(mcp_cfg_path))
+        servers = cfg.get("mcpServers") or {}
+        self.assertIn("obsi", servers)
+        obsi_srv = servers["obsi"]
+        self.assertIn("${PLUGIN_ROOT}/mcp_server/server.py", obsi_srv.get("args") or [])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            vault_dir = os.path.join(tmp, "brain_mcp")
+            app1 = os.path.join(tmp, "acme_app")
+            os.makedirs(app1, exist_ok=True)
+            cfg_path = os.path.join(tmp, "brain-os.json")
+
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    SETUP_SCRIPT,
+                    "--vault",
+                    vault_dir,
+                    "--lang",
+                    "en",
+                    "--pillars",
+                    "Projects,Content,Research",
+                    "--projects",
+                    f"AcmeApp|{app1}|Projects",
+                    "--config-out",
+                    cfg_path,
+                    "--apply",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+
+            p_add = subprocess.run(
+                [
+                    sys.executable,
+                    SETUP_SCRIPT,
+                    "--vault",
+                    vault_dir,
+                    "--add-project",
+                    "AcmeWeb||Projects",
+                    "--parent",
+                    "AcmeApp",
+                    "--aliases",
+                    "acme,portal",
+                    "--apply",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            self.assertEqual(p_add.returncode, 0, p_add.stderr)
+
+            tasks_dir = os.path.join(vault_dir, "02-Tasks", "Projects", "AcmeApp")
+            web_dir = os.path.join(vault_dir, "02-Tasks", "Projects", "AcmeWeb")
+            research_dir = os.path.join(vault_dir, "02-Tasks", "Research")
+            os.makedirs(tasks_dir, exist_ok=True)
+            os.makedirs(web_dir, exist_ok=True)
+            os.makedirs(research_dir, exist_ok=True)
+
+            t1_body = "\n# Blocker Task\n\n## Checklist\n- [ ] Ship pricing\n"
+            with open(os.path.join(tasks_dir, "AcmeApp - Ship Pricing.md"), "w", encoding="utf-8") as f:
+                f.write(
+                    "---\n"
+                    "type: task\n"
+                    "pillar: Projects\n"
+                    "cadence: finite\n"
+                    'project: "[[AcmeApp]]"\n'
+                    "status: Doing\n"
+                    "today: true\n"
+                    "day: Mon\n"
+                    "priority: High\n"
+                    'action: "Publish pricing page"\n'
+                    "created: 2026-11-22\n"
+                    "---"
+                    + t1_body
+                )
+            with open(os.path.join(web_dir, "AcmeWeb - Fix SEO.md"), "w", encoding="utf-8") as f:
+                f.write(
+                    "---\n"
+                    "type: task\n"
+                    "pillar: Projects\n"
+                    "cadence: finite\n"
+                    'project: "[[AcmeWeb]]"\n'
+                    "status: Sprint\n"
+                    "today: false\n"
+                    "priority: Medium\n"
+                    'action: "Add meta tags"\n'
+                    "---\n"
+                )
+            with open(os.path.join(tasks_dir, "AcmeApp - Announce Launch.md"), "w", encoding="utf-8") as f:
+                f.write(
+                    "---\n"
+                    "type: task\n"
+                    "pillar: Projects\n"
+                    "cadence: finite\n"
+                    'project: "[[AcmeApp]]"\n'
+                    "status: Locked\n"
+                    "today: false\n"
+                    'depends_on: "[[AcmeApp - Ship Pricing]]"\n'
+                    "priority: High\n"
+                    'action: "Post launch thread"\n'
+                    "---\n# Launch\n"
+                )
+            # Brand-new custom pillar & status to prove zero hardcoding
+            with open(os.path.join(research_dir, "Lab - Paper Review.md"), "w", encoding="utf-8") as f:
+                f.write(
+                    "---\n"
+                    "type: task\n"
+                    "pillar: Research\n"
+                    "cadence: finite\n"
+                    'project: "[[ResearchLab]]"\n'
+                    "status: Review\n"
+                    "today: false\n"
+                    "priority: High\n"
+                    'action: "Evaluate benchmark paper"\n'
+                    "---\n"
+                )
+            custom_base_path = os.path.join(vault_dir, "ResearchQueue.base")
+            with open(custom_base_path, "w", encoding="utf-8") as f:
+                f.write(
+                    "filters:\n"
+                    "  and:\n"
+                    '    - file.inFolder("02-Tasks")\n'
+                    '    - pillar == "Research"\n'
+                    "properties:\n"
+                    "  action:\n"
+                    "    displayName: Research Step\n"
+                    "views:\n"
+                    "  - type: kanban\n"
+                    "    name: Custom Review Queue\n"
+                    "    filters:\n"
+                    "      and:\n"
+                    '        - status == "Review"\n'
+                    "    groupBy:\n"
+                    "      property: status\n"
+                    "      direction: ASC\n"
+                    "    groupOrder:\n"
+                    "      - Review\n"
+                    "      - null\n"
+                    "    order:\n"
+                    "      - file.name\n"
+                    "      - action\n"
+                )
+
+            # 1. Dynamic base discovery & custom base execution
+            bases_cat = ve.list_bases_summary(vault_dir)
+            base_names = {b["name"] for b in bases_cat["bases"]}
+            self.assertTrue({"Tasks", "Today", "Weekly", "Cohorts", "Projects", "ResearchQueue"} <= base_names)
+
+            q_custom = ve.query_base(vault_dir, base="ResearchQueue.base")
+            self.assertEqual(q_custom["view"], "Custom Review Queue")
+            self.assertEqual(q_custom["total_matched"], 1)
+            self.assertEqual(q_custom["items"][0]["file_name"], "Lab - Paper Review")
+            self.assertEqual(q_custom["items"][0]["status"], "Review")
+
+            q_today = ve.query_base(vault_dir, base="Today.base")
+            self.assertEqual(q_today["total_matched"], 1)
+            self.assertEqual(q_today["items"][0]["file_name"], "AcmeApp - Ship Pricing")
+
+            # 2. Cross-project list_tasks with alias & limit
+            lt_all = ve.list_tasks(vault_dir, limit=2)
+            self.assertEqual(lt_all["returned_count"], 2)
+            self.assertEqual(lt_all["counts"]["today"], 1)
+            self.assertEqual(lt_all["counts"]["locked"], 1)
+            self.assertTrue(lt_all["truncated"])
+            self.assertEqual(lt_all["items"][0]["file_name"], "AcmeApp - Ship Pricing")
+
+            lt_alias = ve.list_tasks(vault_dir, project="portal")
+            self.assertEqual([i["file_name"] for i in lt_alias["items"]], ["AcmeWeb - Fix SEO"])
+
+            lt_umbrella = ve.list_tasks(vault_dir, project="AcmeApp")
+            self.assertEqual(
+                {i["file_name"] for i in lt_umbrella["items"]},
+                {"AcmeApp - Ship Pricing", "AcmeWeb - Fix SEO"},
+            )
+
+            # 3. Path traversal rejection & safe mutation + cascading unlock
+            with self.assertRaises(ValueError):
+                ve.update_task(vault_dir, "../00-Home.md", status="Done")
+
+            upd = ve.update_task(vault_dir, "AcmeApp - Ship Pricing", status="Done")
+            self.assertEqual(upd["task"]["status"], "Done")
+            self.assertFalse(upd["task"]["today"])
+            self.assertEqual(upd["completed"], datetime.date.today().isoformat())
+            self.assertEqual([u["file_name"] for u in upd["unlocked_tasks"]], ["AcmeApp - Announce Launch"])
+
+            with open(os.path.join(tasks_dir, "AcmeApp - Ship Pricing.md"), "r", encoding="utf-8") as f:
+                saved_txt = f.read()
+            self.assertTrue(saved_txt.endswith(t1_body), "Markdown body must stay preserved byte-for-byte")
+
+            # 4. Real subprocess Stdio JSON-RPC 2.0 E2E check
+            reqs = [
+                {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}},
+                {"jsonrpc": "2.0", "method": "notifications/initialized"},
+                {"jsonrpc": "2.0", "id": 2, "method": "ping"},
+                {"jsonrpc": "2.0", "id": 3, "method": "tools/list"},
+                {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "list_bases", "arguments": {}}},
+                {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "list_tasks", "arguments": {"limit": 10}}},
+                {"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "query_base", "arguments": {"base": "ResearchQueue.base"}}},
+                {"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "get_vault_overview", "arguments": {"cwd": app1}}},
+                {"jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": {"name": "update_task", "arguments": {"task_ref": "AcmeApp - Announce Launch", "status": "Doing", "today": True}}},
+                {"jsonrpc": "2.0", "id": 9, "method": "resources/list"},
+                {"jsonrpc": "2.0", "id": 10, "method": "resources/read", "params": {"uri": "obsi://overview"}},
+                {"jsonrpc": "2.0", "id": 11, "method": "resources/read", "params": {"uri": "obsi://base/Today.base"}},
+            ]
+            stdin_payload = "\n".join(json.dumps(r, ensure_ascii=False) for r in reqs) + "\n"
+            env = dict(os.environ)
+            env["OBSI_CONFIG_PATH"] = cfg_path
+            env.pop("OBSI_VAULT_PATH", None)
+
+            srv_proc = subprocess.run(
+                [sys.executable, "-X", "utf8", os.path.join(REPO_ROOT, "mcp_server", "server.py")],
+                input=stdin_payload,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=env,
+            )
+            self.assertEqual(srv_proc.returncode, 0, srv_proc.stderr)
+            self.assertEqual(srv_proc.stderr.strip(), "", f"Unexpected stderr: {srv_proc.stderr}")
+
+            resps = [json.loads(line) for line in srv_proc.stdout.strip().splitlines()]
+            self.assertEqual(len(resps), 11, "Notifications must not emit responses")
+            by_id = {r["id"]: r["result"] for r in resps}
+
+            self.assertEqual(by_id[1]["serverInfo"]["name"], "obsi-founder-compass")
+            self.assertEqual(by_id[2], {})
+            tool_names = [t["name"] for t in by_id[3]["tools"]]
+            self.assertEqual(tool_names, ["list_tasks", "query_base", "list_bases", "get_vault_overview", "update_task"])
+            self.assertFalse(by_id[4]["isError"])
+            self.assertEqual(by_id[5]["structuredContent"]["items"][0]["file_name"], "AcmeApp - Announce Launch")
+            self.assertEqual(by_id[6]["structuredContent"]["items"][0]["status"], "Review")
+            self.assertEqual(by_id[7]["structuredContent"]["umbrella_project"], "AcmeApp")
+            self.assertEqual(by_id[7]["structuredContent"]["workspace_mode"], "multi_project")
+            self.assertEqual(by_id[8]["structuredContent"]["task"]["status"], "Doing")
+            self.assertTrue(by_id[8]["structuredContent"]["task"]["today"])
+
+            res_uris = {r["uri"] for r in by_id[9]["resources"]}
+            self.assertIn("obsi://overview", res_uris)
+            self.assertIn("obsi://base/ResearchQueue.base", res_uris)
+
+            ov_json = json.loads(by_id[10]["contents"][0]["text"])
+            self.assertGreaterEqual(ov_json["task_counts"]["today"], 1)
+            today_json = json.loads(by_id[11]["contents"][0]["text"])
+            self.assertEqual(today_json["items"][0]["file_name"], "AcmeApp - Announce Launch")
 
 
 if __name__ == "__main__":

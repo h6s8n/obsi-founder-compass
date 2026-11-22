@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "obsi": {
+      "command": "python3",
+      "args": [
+        "-X",
+        "utf8",
+        "${PLUGIN_ROOT}/mcp_server/server.py"
+      ],
+      "env": {
+        "PYTHONUTF8": "1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    }
+  }
+}

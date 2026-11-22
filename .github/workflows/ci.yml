@@ -33,3 +33,7 @@ jobs:
         run: |
           python -B skills/second-brain/scripts/resolve_obsi_hub.py --cwd . --json
           python -B skills/obsi-setup/scripts/scaffold_brain.py --vault ./smoke-vault --lang en --dry-run
+
+      - name: Smoke-test MCP config & stdio JSON-RPC server
+        run: |
+          python -B -c "import json, subprocess, sys; cfg = json.load(open('mcp_config.json', encoding='utf-8')); assert 'obsi' in cfg['mcpServers']; reqs = [{'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {'protocolVersion': '2025-03-26'}}, {'jsonrpc': '2.0', 'method': 'notifications/initialized'}, {'jsonrpc': '2.0', 'id': 2, 'method': 'tools/list'}]; inp = '\n'.join(json.dumps(r) for r in reqs) + '\n'; p = subprocess.run([sys.executable, '-X', 'utf8', 'mcp_server/server.py'], input=inp, text=True, capture_output=True, encoding='utf-8', check=True); lines = [json.loads(l) for l in p.stdout.strip().splitlines()]; assert len(lines) == 2 and any(t['name'] == 'list_tasks' for t in lines[1]['result']['tools']); print('MCP stdio OK:', [t['name'] for t in lines[1]['result']['tools']])"

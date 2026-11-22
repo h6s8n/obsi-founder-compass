@@ -447,6 +447,24 @@ def collect_project_tasks(
     return summary, "\n".join(lines)
 
 
+def ready_hub_options(lang: str) -> list[str]:
+    if str(lang).lower() == "fa":
+        return [
+            "ایده خام",
+            "مشاوره",
+            "اولویت‌بندی",
+            "کارهای امروز",
+            "بازرسی",
+        ]
+    return [
+        "Raw Idea",
+        "Consult",
+        "Priority Plan",
+        "Daily Tasks",
+        "Audit",
+    ]
+
+
 def _format_project_entry(p: dict, lang: str) -> str:
     parts: list[str] = []
     if p["is_umbrella"]:
@@ -578,16 +596,6 @@ def resolve_hub(
                 card_lines.append(
                     f"📁 پوشه‌های ثبت‌نشده قابل تبدیل به پروژه: {', '.join(shown_unreg)}{more_u}"
                 )
-
-            options = []
-            for idx, entry in enumerate(ws_entries):
-                pref = "(Recommended) " if idx == 0 else ""
-                options.append(f"{pref}{entry['name']} ({_format_project_entry(entry, lang)})")
-            if unregistered:
-                options.append("➕ ثبت پوشه دیگر از همین ورک‌اسپیس به عنوان پروژه جدا (/obsi-setup)")
-            else:
-                options.append("لایه ۰ — مدیریت پروژه‌ها یا ستون‌ها (/obsi-setup)")
-            options.append("لایه ۴ — بازرس چت و سلامت ابسیدین (/obsi-inspect)")
         else:
             extra_unreg = f" · {unreg_count} unregistered folder(s)" if unreg_count else ""
             summary = (
@@ -608,18 +616,8 @@ def resolve_hub(
                     f"📁 Unregistered folders ready to add: {', '.join(shown_unreg)}{more_u}"
                 )
 
-            options = []
-            for idx, entry in enumerate(ws_entries):
-                pref = "(Recommended) " if idx == 0 else ""
-                options.append(f"{pref}{entry['name']} ({_format_project_entry(entry, lang)})")
-            if unregistered:
-                options.append("➕ Register another subfolder from this workspace as a separate project (/obsi-setup)")
-            else:
-                options.append("Layer 0 — Manage Projects or Pillars (/obsi-setup)")
-            options.append("Layer 4 — In-Flight Transcript & Vault Inspector (/obsi-inspect)")
-
         return {
-            "state": "pick_project",
+            "state": "ready",
             "workspace_mode": "multi_project",
             "vault_path": vault_path,
             "detected_project": None,
@@ -630,7 +628,7 @@ def resolve_hub(
             "project_tasks": None,
             "project_tasks_card": "\n".join(card_lines),
             "summary_2lines": summary,
-            "recommended_options": options,
+            "recommended_options": ready_hub_options(lang),
         }
 
     detected_proj = matched[0] if len(matched) == 1 else None
@@ -665,45 +663,19 @@ def resolve_hub(
             }
         ]
 
-    top = project_tasks["items"][0] if (project_tasks and project_tasks.get("items")) else None
     if lang == "fa":
         proj_label = f"پروژه فعال: «{detected}»" if detected else f"{len(projects)} پروژه در ابسیدین"
         summary = (
             f"مغز دوم آماده است ({proj_label}).\n"
             f"آمار زنده: {stats['today_tasks']} تسک امروز · {stats['sprint_tasks']} تسک اسپرینت · {stats['active_cohorts']} کورس فعال · {stats['scorecards_count']} کارنامه."
         )
-        total_items = len(project_tasks["items"]) if project_tasks and project_tasks.get("items") else 0
-        opt1 = (
-            f"(Recommended) لایه ۳ — تسک‌های فعال و کارتابل امروز ({total_items} تسک باز)"
-            if total_items
-            else "(Recommended) لایه ۳ — اجرای روزمره و ثبت تسک جدید (/obsi)"
-        )
-        options = [
-            opt1,
-            "لایه ۱ — مشاور کلان بازار پروژه (/obsi-consult)",
-            "لایه ۲ — انتخاب کورس‌ها و اولویت‌بندی (/obsi-priority)",
-            "لایه ۰ — افزودن پروژه یا ستون جدید (/obsi-setup)",
-            "لایه ۴ — بازرس چت و سلامت ابسیدین (/obsi-inspect)",
-        ]
     else:
         proj_label = f"Active project: {detected}" if detected else f"{len(projects)} project(s) in Vault"
         summary = (
             f"Second Brain is ready ({proj_label}).\n"
             f"Live stats: {stats['today_tasks']} today · {stats['sprint_tasks']} sprint · {stats['active_cohorts']} active cohorts · {stats['scorecards_count']} scorecards."
         )
-        total_items = len(project_tasks["items"]) if project_tasks and project_tasks.get("items") else 0
-        opt1 = (
-            f"(Recommended) Layer 3 — Active Tasks & Daily Queue ({total_items} active)"
-            if total_items
-            else "(Recommended) Layer 3 — Daily Execution (capture / next task)"
-        )
-        options = [
-            opt1,
-            "Layer 1 — 30,000-ft Market Consultant (/obsi-consult)",
-            "Layer 2 — Cohort Design & Advisory Priority (/obsi-priority)",
-            "Layer 0 — Add Project or Pillar (/obsi-setup)",
-            "Layer 4 — In-Flight Transcript & Vault Inspector (/obsi-inspect)",
-        ]
+    options = ready_hub_options(lang)
 
     return {
         "state": "ready",
