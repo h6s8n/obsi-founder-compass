@@ -1,5 +1,5 @@
 {
-  "updated_at_utc": "2026-11-25T21:44:05Z",
+  "updated_at_utc": "2026-11-26T08:23:04Z",
   "tron_address": "TZ6CDh5UXKKgq8CQbHW6VDxY3fnzQAABbo",
   "evm_address": "0x0a4C4D067526AcFDb394469D1227754211b90c49",
   "total_usd": 0,
@@ -11,8 +11,8 @@
   "tx_count": 0,
   "live_balance_floor_usd": 0.0,
   "last_blocks": {
-    "base": 62263345,
-    "arbitrum": 527547056
+    "base": 62455042,
+    "arbitrum": 527676029
   },
   "seen_txs": {}
 }
